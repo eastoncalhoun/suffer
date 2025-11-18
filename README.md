@@ -2,7 +2,9 @@
 A simple, decentralized package manager for C and C++ that actually works.
 
 ## The Problem
-C++ dependency management is a nightmare. CMake is what hell is like, vcpkg is a cry for help, Conan injects Python just to feel something, and manual library management makes one contemplate.. <details>Rust...<details> Again.. Most developers just copy-paste headers or give up entirely and move to a higher level language.
+<summary>
+C++ dependency management is a nightmare. CMake is what hell is like, vcpkg is a cry for help, Conan injects Python just to feel something, and manual library management makes one contemplate.. <details>Rust...</details> Again.. Most developers just copy-paste headers or give up entirely and move to a higher level language.
+</summary>
 
 ## The Solution
 
