@@ -1,0 +1,244 @@
+CPM Project TODO & Structure
+Directory Structure
+cpm/
+├── src/
+│   ├── main.cpp                 # Entry point, CLI parsing
+│   ├── commands/
+│   │   ├── install.cpp/h        # cpm install <url>
+│   │   ├── install_local.cpp/h  # cpm install-local <path>
+│   │   ├── import.cpp/h         # cpm import <lib>
+│   │   ├── config.cpp/h         # cpm config set <key> <value>
+│   │   ├── build.cpp/h          # cpm build
+│   │   └── package.cpp/h        # cpm package <type> (future)
+│   ├── core/
+│   │   ├── registry.cpp/h       # Manage ~/.cpm/registry/
+│   │   ├── cache.cpp/h          # Build cache management
+│   │   ├── builder.cpp/h        # Compile libs, static linking
+│   │   ├── makefile_gen.cpp/h   # Generate Makefiles
+│   │   ├── json_utils.cpp/h     # JSON parsing/writing
+│   │   └── git.cpp/h            # Git operations (system calls)
+│   └── utils/
+│       ├── fs.cpp/h             # Filesystem helpers
+│       ├── hash.cpp/h           # File hashing for cache
+│       └── logging.cpp/h        # Simple logging
+├── lib/                         # Dependencies for cpm itself
+│   ├── include/
+│   │   └── nlohmann/
+│   │       └── json.hpp
+│   └── static/
+├── tests/                       # Unit tests (future)
+├── docs/                        # Documentation
+│   ├── README.md
+│   └── USAGE.md
+├── Makefile                     # Build cpm itself
+├── cpm.json                     # cpm's own dependencies (dogfooding!)
+└── .gitignore
+
+TODO List
+Phase 1: MVP (Core Functionality)
+
+ Project Setup
+
+ Initialize git repo
+ Create directory structure
+ Setup .gitignore
+ Write basic README
+
+
+ Registry System (~/.cpm/registry/)
+
+ Create registry directory on first run
+ Registry structure: ~/.cpm/registry/<lib-name>/
+ Save lib metadata (cpm.json format)
+ List installed libs command
+
+
+ Install Command (cpm install <github-url>)
+
+ Parse GitHub URL
+ Clone repo to temp location
+ Extract lib name from URL or repo
+ Detect dependencies:
+
+ Check for existing cpm.json
+ Parse CMakeLists.txt for find_package()
+ Prompt user if cant detect
+
+
+ Generate cpm.json for lib
+ Move to registry
+ Verify git is installed
+
+
+ Install-Local Command (cpm install-local <path>)
+
+ Accept tar.gz, zip, or directory
+ Extract if archive
+ Prompt for lib name and version
+ Generate cpm.json
+ Copy to registry
+
+
+ Import Command (cpm import <lib>)
+
+ Check if lib exists in registry
+ Create project structure if first import:
+
+ lib/include/
+ lib/static/
+ Generate cpmSettings.json with defaults
+ Generate cpm.json
+
+
+ Resolve dependencies recursively
+ Check build cache (~/.cpm/cache/)
+ Build lib if not cached:
+
+ Compile source files
+ Create static archive (.a)
+ Bundle dependencies (static linking)
+
+
+ Copy headers to lib/include/
+ Copy static lib to lib/static/
+ Update cpm.json with dependency
+ Update cpm.lock with versions/commits
+ Regenerate Makefile
+
+
+
+Phase 2: Build System
+
+ Makefile Generation
+
+ Scan src/ for .cpp files recursively
+ Read cpmSettings.json for compiler flags
+ Generate include paths (-Ilib/include -Isrc)
+ Generate link commands (lib/static/*.a)
+ Add clean target
+ Support custom source directories
+
+
+ Builder System
+
+ Detect if lib is header-only
+ Compile .c/.cpp files to .o
+ Create static archive with ar
+ Merge dependency .a files (static linking)
+ Handle build errors gracefully
+ Parallel compilation support (future)
+
+
+ Cache System (~/.cpm/cache/)
+
+ Hash source files for cache key
+ Include dependency versions in cache key
+ Store built .a files
+ cache.json metadata
+ Cache invalidation on source changes
+
+
+
+Phase 3: Configuration
+
+ Config Command (cpm config)
+
+ cpm config set standard c++20
+ cpm config set flags "-Wall -O3"
+ cpm config set compiler clang++
+ cpm config set defines "DEBUG_MODE"
+ cpm config list - show current settings
+ Update cpmSettings.json
+ Regenerate Makefile after changes
+
+
+ VSCode Integration
+
+ Generate .vscode/c_cpp_properties.json
+ Auto-include lib/include in includePath
+ Match compiler settings from cpmSettings.json
+
+
+
+Phase 4: Polish
+
+ CLI Interface
+
+ Proper argument parsing
+ --help for all commands
+ --version flag
+ Colored output (optional, not ncurses)
+ Progress indicators for long operations
+
+
+ Error Handling
+
+ Validate GitHub URLs
+ Check for git installation
+ Handle network failures
+ Handle corrupt archives
+ Helpful error messages
+ Rollback on failed imports
+
+
+ Build Command (cpm build)
+
+ Wrapper around make
+ Show compilation progress
+ Handle build errors
+
+
+ Remove Command (cpm remove <lib>)
+
+ Remove from lib/
+ Update cpm.json
+ Regenerate Makefile
+
+
+
+Phase 5: Distribution (Future)
+
+ Package Command (cpm package)
+
+ cpm package appimage
+
+ Generate AppDir structure
+ Create .desktop file
+ Run appimagetool
+
+
+ cpm package flatpak
+
+ Generate Flatpak manifest
+ Run flatpak-builder
+
+
+ Accept flags: --name, --icon, --version
+
+
+
+Phase 6: Advanced (Future)
+
+ Semver dependency resolution
+ Version constraints (^, ~, >=)
+ Update command (update all deps)
+ Search command (search registry)
+ Publish command (share libs)
+ Cross-compilation support
+ Windows MinGW support
+ macOS testing
+ Unit tests
+ CI/CD (GitHub Actions)
+
+
+First Steps (Start Here)
+
+Create project structure
+Add nlohmann/json to lib/
+Implement basic CLI parsing in main.cpp
+Implement cpm install for GitHub URLs
+Test with fmt: cpm install https://github.com/fmtlib/fmt
+Implement cpm import for header-only libs first
+Test full workflow: install → import → build
+
+Start coding when you get home. Build the install command first.
