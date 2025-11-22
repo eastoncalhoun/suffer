@@ -26,5 +26,8 @@ namespace suffer::core {
         const std::map<std::string, std::string>& getDependencies();
 
         const bool isHeaderOnly();
+        const bool isNull();
+
+        static Package nullPackage();
     };
 }

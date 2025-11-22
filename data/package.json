@@ -1,0 +1,11 @@
+{
+    "package": "packageName",
+    "version": "version",
+    "author": "author",
+    "source": "local",
+    "headerOnly": false,
+    "dependencies": {
+        "packageA": "version",
+        "packageB": "version"
+    }
+}

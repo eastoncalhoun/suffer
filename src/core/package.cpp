@@ -32,3 +32,13 @@ const std::map<std::string, std::string>& suffer::core::Package::getDependencies
 const bool suffer::core::Package::isHeaderOnly() {
     return this->headerOnly;
 }
+
+const bool suffer::core::Package::isNull() {
+    suffer::core::Package null = suffer::core::Package::nullPackage();
+
+    return this->name == null.getName() && this->version == null.getVersion() && this->author == null.getAuthor() && this->source == null.getSource();
+}
+
+suffer::core::Package suffer::core::Package::nullPackage() {
+    return suffer::core::Package("null", "null", "null", "null", false, std::map<std::string, std::string>());
+}

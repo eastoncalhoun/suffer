@@ -1,0 +1,1 @@
+//if empty install install nothing a few times then pretend to rm -rf /

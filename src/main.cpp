@@ -1,7 +1,10 @@
 #include "./core/registryHandler.hpp"
 
 int main() {
-    auto p = suffer::core::RegistryHandler();
+    auto r = suffer::core::RegistryHandler();
+    auto p = r.findPackage("foo");
+
+    std::cout << p.getSource() << "\n";
 
     return 777;
 }
