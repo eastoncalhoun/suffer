@@ -66,3 +66,8 @@ const std::string suffer::core::Package::toJsonText() {
 suffer::core::Package suffer::core::Package::nullPackage() {
     return suffer::core::Package("null", "null", "null", "null", false, std::map<std::string, std::string>());
 }
+
+const std::filesystem::path suffer::core::Package::determinePath() {
+    const std::string home = getenv("HOME");
+    return std::filesystem::path(home) / ".suffer" / "libs" / this->name;
+}

@@ -2,6 +2,9 @@
 
 #include <string>
 #include <map>
+#include <filesystem>
+
+#include <unistd.h>
 
 #include "../../include/nlohmann/json.hpp"
 
@@ -33,5 +36,7 @@ namespace suffer::core {
         const std::string toJsonText();
 
         static Package nullPackage();
+        //The package's path. Probably.
+        const std::filesystem::path determinePath();
     };
 }
