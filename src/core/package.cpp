@@ -39,6 +39,30 @@ const bool suffer::core::Package::isNull() {
     return this->name == null.getName() && this->version == null.getVersion() && this->author == null.getAuthor() && this->source == null.getSource();
 }
 
+const std::string suffer::core::Package::toJsonText() {
+    std::vector<std::string> keys = {};
+
+    for (std::map<std::string, std::string>::iterator element = this->dependencies.begin(); element != this->dependencies.end(); element++) {
+        keys.push_back(element->first);
+    }
+    
+    nlohmann::json pJ = {
+        {"package", this->name},
+        {"version", this->version},
+        {"author", this->author},
+        {"source", this->source},
+        {"headerOnly", this->headerOnly}
+    };
+
+    pJ["dependencies"] = {};
+
+    for (int i = 0; i < keys.size(); i++) {
+        pJ["dependencies"][keys.at(i)] = this->dependencies[keys.at(i)];
+    }
+
+    return pJ.dump(4);
+}
+
 suffer::core::Package suffer::core::Package::nullPackage() {
     return suffer::core::Package("null", "null", "null", "null", false, std::map<std::string, std::string>());
 }

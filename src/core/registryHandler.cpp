@@ -1,28 +1,36 @@
 #include "./registryHandler.hpp"
 
+const std::filesystem::path suffer::core::RegistryHandler::getLibsPath() {
+    return this->LIBS_PATH;
+}
+
+const std::filesystem::path suffer::core::RegistryHandler::getCachePath() {
+    return this->CACHE_PATH;
+}
+
 void suffer::core::RegistryHandler::checkCreated(const bool CREATED, const std::filesystem::path& PATH) {
     if (!CREATED) {
-        std::cerr << "Failed to create " << PATH << std::endl;
+        std::cerr << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(PATH.string()) << "\n";
         exit(EXIT_FAILURE);
     }
 }
 
 const std::filesystem::path suffer::core::RegistryHandler::getRegistryPath() {
-    if (geteuid() == 0) {
-        std::cerr << "NO!\nABSOLUTELY NOT!!\nDon't run this as root!!!\nI'm a random dude on the internet!!!!\n>:(!!!!!!!!\n";
-        exit(EXIT_FAILURE);
-    }
-
     const char* HOME = std::getenv("HOME");
 
     if (!HOME || HOME[0] == '\0') {
-        std::cerr << "$HOME is not set. It's freezing outside.\n";
+        std::cerr <<  suffer::utils::io::error() << " The " << suffer::utils::io::blue("$HOME ") << " environment variable is not set\n";
+
+        std::cout << "Try " << suffer::utils::io::yellow("$") << suffer::utils::io::blue("export HOME=") << suffer::utils::io::yellow("/path/to/your/home/directory") << " ?\n";
+
         sleep(1);
-        std::cout << "Let " << std::flush;
+        std::cout << suffer::utils::io::blue("It's freezing outside.. ") << std::flush;
         sleep(1);
-        std::cout << "me " << std::flush;
+        std::cout << suffer::utils::io::red("Let ") << std::flush;
         sleep(1);
-        std::cout << "in.\n";
+        std::cout << suffer::utils::io::red("me ") << std::flush;
+        sleep(1);
+        std::cout << suffer::utils::io::red("in.\n");
 
         exit(EXIT_FAILURE);
     }
@@ -46,18 +54,20 @@ void suffer::core::RegistryHandler::createRegistry() {
     std::ofstream settingsJson { this->REGISTRY_PATH / "settings.json" };
 
     if (!settingsJson) {
-        std::cerr << "Error: packages.json could not be created\n";
+        std::cerr << suffer::utils::io::error() << " The " << suffer::utils::io::dataString((this->REGISTRY_PATH / "settings.json").string()) << " file could not be created.\n";
         exit(EXIT_FAILURE);
     }
 
     settingsJson << this->generateSettings().dump(4);
 
     settingsJson.close();
+
+    std::cout << suffer::utils::io::okay() << " The registry has been generated.\n";
 }
 
 void suffer::core::RegistryHandler::nukeRegistry() {
     if (!std::filesystem::exists(this->REGISTRY_PATH)) {
-        std::cerr << "Registry doesn't exist how did you get here?\n";
+        std::cerr << suffer::utils::io::error() << " The registry that was to be destroyed doesn't exist. How did you get here?\n";
         exit(EXIT_FAILURE);
     }
 
@@ -70,31 +80,33 @@ const std::vector<suffer::core::Package> suffer::core::RegistryHandler::getAllPa
     for (auto entry : std::filesystem::directory_iterator(this->LIBS_PATH)) {
         std::filesystem::path pPath = entry.path() / "suffer.json";
         
-        if (std::filesystem::exists(pPath)) {
-            std::ifstream pFile = { pPath };
-
-            if (!pFile) {
-                std::cerr << "Error opening " << pPath.c_str() << "\n";
-                exit(EXIT_FAILURE);
-            }
-
-            std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
-            
-            pFile.close();
-
-            nlohmann::json pJson = nlohmann::json::parse(fData);
-
-            suffer::core::Package package = suffer::core::Package(
-                pJson.value("package", "undefined"),
-                pJson.value("version", "undefined"),
-                pJson.value("author", "undefined"),
-                pJson.value("source", "undefined"),
-                pJson.value("headerOnly", false),
-                pJson["dependencies"].get<std::map<std::string, std::string>>()
-            );
-
-            packages.push_back(package);
+        if (!std::filesystem::exists(pPath)) {
+            std::cout << suffer::utils::io::warning() << " No suffer.json file found at " + suffer::utils::io::dataString(pPath.string()) + "\nIf this is a package, you must create a suffer.json file at " << suffer::utils::io::dataString(entry.path().string()) << ". Try a reinstall?\n";
         }
+
+        std::ifstream pFile = { pPath };
+
+        if (!pFile) {
+            std::cerr << suffer::utils::io::error() << "Failed to open " << suffer::utils::io::dataString(pPath.string()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+        std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
+        
+        pFile.close();
+
+        nlohmann::json pJson = nlohmann::json::parse(fData);
+
+        suffer::core::Package package = suffer::core::Package(
+            pJson.value("package", "undefined"),
+            pJson.value("version", "undefined"),
+            pJson.value("author", "undefined"),
+            pJson.value("source", "undefined"),
+            pJson.value("headerOnly", false),
+            pJson["dependencies"].get<std::map<std::string, std::string>>()
+        );
+
+        packages.push_back(package);
     }
 
     return packages;
@@ -104,39 +116,114 @@ const suffer::core::Package suffer::core::RegistryHandler::findPackage(const std
     for (auto entry : std::filesystem::directory_iterator(this->LIBS_PATH)) {
         std::filesystem::path pPath = entry.path() / "suffer.json";
         
-        if (std::filesystem::exists(pPath)) {
-            std::ifstream pFile = { pPath };
+        if (!std::filesystem::exists(pPath)) {
+            std::cout << suffer::utils::io::warning() << " No suffer.json file found at " + suffer::utils::io::dataString(pPath.string()) +"\nIf this is a package, you must create a suffer.json file at " << suffer::utils::io::dataString(entry.path().string()) << "\n";
+        }
 
-            if (!pFile) {
-                std::cerr << "Error opening " << pPath.c_str() << "\n";
-                exit(EXIT_FAILURE);
-            }
+        if (entry.path().filename().string().find(name) == std::string::npos) {
+            continue;
+        }
 
-            std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
-            
-            pFile.close();
+        std::ifstream pFile = { pPath };
 
-            nlohmann::json pJson = nlohmann::json::parse(fData);
-            std::string pName = pJson.value("package", "undefined");
+        if (!pFile) {
+            std::cerr << suffer::utils::io::error() <<  " Failed to open the file " << suffer::utils::io::dataString(pPath.string()) << "\n";
+            exit(EXIT_FAILURE);
+        }
 
-            if (pName == name) {
-                return suffer::core::Package(
-                    pJson.value("package", "undefined"),
-                    pJson.value("version", "undefined"),
-                    pJson.value("author", "undefined"),
-                    pJson.value("source", "undefined"),
-                    pJson.value("headerOnly", false),
-                    pJson["dependencies"].get<std::map<std::string, std::string>>()
-                );
-            }
+        std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
+        
+        pFile.close();
+
+        nlohmann::json pJson = nlohmann::json(); 
+        std::string pName;
+        std::map<std::string, std::string> deps;
+
+        try {
+            pJson = nlohmann::json::parse(fData);
+            pJson.value("package", "undefined");
+        } catch (std::exception& e) {
+            std::cerr << suffer::utils::io::error() << " Invalid json at " << suffer::utils::io::dataString(pPath.string()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+        try {
+            deps = pJson["dependencies"].get<std::map<std::string, std::string>>();
+        } catch (std::exception& e) {
+            deps = std::map<std::string, std::string>();
+        }
+
+        return suffer::core::Package(
+            pJson.value("package", "undefined"),
+            pJson.value("version", "undefined"),
+            pJson.value("author", "undefined"),
+            pJson.value("source", "undefined"),
+            pJson.value("headerOnly", false),
+            deps
+        );
+    }
+
+    std::cerr << suffer::utils::io::error() << " The package " << suffer::utils::io::dataString(name) << " was not found in the registry\n";
+    exit(EXIT_FAILURE);
+}
+
+void suffer::core::RegistryHandler::deletePackage(const std::string& oldPackageName) {
+    Package p = this->findPackage(oldPackageName);
+
+    std::filesystem::remove_all(this->LIBS_PATH / oldPackageName);
+
+    std::cout << suffer::utils::io::okay() << " The package " << suffer::utils::io::dataString(oldPackageName) << " has been removed!\n"; 
+}
+
+void suffer::core::RegistryHandler::createPackageJson(suffer::core::Package& newPackage) {
+    const std::filesystem::path pPath = this->LIBS_PATH / newPackage.getName();
+    const std::filesystem::path pJPath = pPath / "suffer.json";
+
+    if (newPackage.isNull()) {
+        std::cerr << suffer::utils::io::error() << " The proposed new package is a null package\n";
+        exit(EXIT_FAILURE);
+    }
+
+    if (!std::filesystem::exists(pPath)) {
+        std::cerr << suffer::utils::io::error() << " There is nothing at " << suffer::utils::io::dataString(pPath) << " to generate for\n";
+        exit(EXIT_FAILURE);
+    }
+
+    if (std::filesystem::exists(pJPath)) {
+        std::string input;
+
+        std::cout << suffer::utils::io::info() << " The suffer.json file already exists in " << suffer::utils::io::dataString(pPath.string()) << "\nWould you like to make a new one?\n" << suffer::utils::io::yesNo();
+
+        std::cin >> input;
+
+        if (input != "y" && input != "yes") {
+            return;
         }
     }
+
+    std::ofstream jFile { pJPath };
+    
+    if (!jFile) {
+        std::cerr << suffer::utils::io::error() << " Failed to open " << suffer::utils::io::dataString(pJPath.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    jFile << newPackage.toJsonText();
+    jFile.close();
+
+    std::cout << suffer::utils::io::okay() << " Successfully created " << suffer::utils::io::dataString(pJPath.string()) << "\n";
 }
 
 suffer::core::RegistryHandler::RegistryHandler() : REGISTRY_PATH(this->getRegistryPath()), LIBS_PATH(this->getRegistryPath() / "libs"), CACHE_PATH(this->getRegistryPath() / "cache") {
-    if (!std::filesystem::exists(this->REGISTRY_PATH)) {
-        std::cout << "Registry not detected. Attempting to generate.\n";
-        this->createRegistry();
-        std::cout << "Registry generated successfully\n";
+    if (!std::filesystem::exists(this->REGISTRY_PATH) || !std::filesystem::exists(this->CACHE_PATH) || !std::filesystem::exists(this->LIBS_PATH)) {
+        std::string input;
+
+        std::cout << suffer::utils::io::error() << " No registry was detected at " << suffer::utils::io::dataString(this->REGISTRY_PATH.string()) << ".\nWould you like to try and generate one?" << suffer::utils::io::yesNo();
+
+        std::cin >> input;
+
+        if (input == "y" || input == "yes") {
+            this->createRegistry();
+        }
     }
 }

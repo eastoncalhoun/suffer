@@ -3,6 +3,8 @@
 #include <string>
 #include <map>
 
+#include "../../include/nlohmann/json.hpp"
+
 namespace suffer::core {
     
     class Package {
@@ -27,6 +29,8 @@ namespace suffer::core {
 
         const bool isHeaderOnly();
         const bool isNull();
+
+        const std::string toJsonText();
 
         static Package nullPackage();
     };

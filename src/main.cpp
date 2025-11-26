@@ -1,10 +1,17 @@
-#include "./core/registryHandler.hpp"
+#include <iostream>
+#include <unistd.h>
 
-int main() {
-    auto r = suffer::core::RegistryHandler();
-    auto p = r.findPackage("foo");
+#include "./commands/router.hpp"
+#include "./utils/io.hpp"
 
-    std::cout << p.getSource() << "\n";
+int main(int argc, char** argv) {
+    if (geteuid() == 0) {
+        std::cerr << suffer::utils::io::error() << " NO! ABSOLUTELY NOT!!\nDo " << suffer::utils::io::red("NOT") << " run suffer as root!!!\n";
+        exit(EXIT_FAILURE);
+    }
 
-    return 777;
+    suffer::commands::Router router = suffer::commands::Router(argc, argv);
+    router.route();
+
+    return EXIT_SUCCESS;
 }

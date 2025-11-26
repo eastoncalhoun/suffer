@@ -1,5 +1,5 @@
 {
-    "package": "packageName",
+    "package": "foo",
     "version": "version",
     "author": "author",
     "source": "local",
