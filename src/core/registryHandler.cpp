@@ -95,7 +95,22 @@ const std::vector<suffer::core::Package> suffer::core::RegistryHandler::getAllPa
         
         pFile.close();
 
-        nlohmann::json pJson = nlohmann::json::parse(fData);
+        nlohmann::json pJson = nlohmann::json();
+        std::map<std::string, std::string> deps;
+
+        try {
+            pJson = nlohmann::json::parse(fData);
+            pJson.value("package", "undefined");
+        } catch (std::exception& e) {
+            std::cerr << suffer::utils::io::error() << " Invalid json at " << suffer::utils::io::dataString(pPath.string()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+        try {
+            deps = pJson["dependencies"].get<std::map<std::string, std::string>>();
+        } catch (std::exception& e) {
+            deps = std::map<std::string, std::string>();
+        }
 
         suffer::core::Package package = suffer::core::Package(
             pJson.value("package", "undefined"),
@@ -103,7 +118,7 @@ const std::vector<suffer::core::Package> suffer::core::RegistryHandler::getAllPa
             pJson.value("author", "undefined"),
             pJson.value("source", "undefined"),
             pJson.value("headerOnly", false),
-            pJson["dependencies"].get<std::map<std::string, std::string>>()
+            deps
         );
 
         packages.push_back(package);
@@ -120,7 +135,7 @@ const suffer::core::Package suffer::core::RegistryHandler::findPackage(const std
             std::cout << suffer::utils::io::warning() << " No suffer.json file found at " + suffer::utils::io::dataString(pPath.string()) +"\nIf this is a package, you must create a suffer.json file at " << suffer::utils::io::dataString(entry.path().string()) << "\n";
         }
 
-        if (entry.path().filename().string().find(name) == std::string::npos) {
+        if (entry.path().filename().string().find(name) == std::string::npos || entry.path().filename().string().size() != name.size()) {
             continue;
         }
 

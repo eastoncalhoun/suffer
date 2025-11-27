@@ -6,6 +6,7 @@ namespace suffer::utils::io {
     std::string red(const std::string& string);
     std::string yellow(const std::string& string);
     std::string blue(const std::string& string);
+    std::string magenta(const std::string& string);
     std::string cyan(const std::string& string);
     std::string green(const std::string& string);
     
@@ -13,6 +14,7 @@ namespace suffer::utils::io {
     const std::string warning();
     const std::string okay();
     const std::string info();
+    const std::string pInfo();
     //default: no
     const std::string yesNo();
     //default: yes

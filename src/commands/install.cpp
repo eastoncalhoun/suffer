@@ -2,7 +2,7 @@
 #include "./install.hpp"
 
 void suffer::commands::install(std::vector<std::string>& args) {
-    if (args.size() < 2) {
+    if (args.size() < 1) {
         std::cerr << suffer::utils::io::error() << " Not enough arguments supplied to " << suffer::utils::io::dataString("install") << "\n";
         std::cout << suffer::utils::io::info() << " Try " << suffer::utils::io::commandString("suffer help\n");
         exit(EXIT_FAILURE);
@@ -12,7 +12,7 @@ void suffer::commands::install(std::vector<std::string>& args) {
 
     std::string input, dualieInput;
 
-    if (args[1] == "--local") {
+    if (args[0] == "--local") {
         std::cout << suffer::utils::io::info() << " You must be in the root directory of your new package, and that directory should be whatever the name of your package is.\n" << suffer::utils::io::red("Are these conditions met? ") << suffer::utils::io::noYes();
 
         std::cin >> input;

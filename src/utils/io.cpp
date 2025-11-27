@@ -12,6 +12,10 @@ std::string suffer::utils::io::blue(const std::string& string) {
     return "\x1b[34m" + string + "\x1b[0m";
 }
 
+std::string suffer::utils::io::magenta(const std::string& string) {
+    return "\x1b[35m" + string + "\x1b[0m";
+}
+
 std::string suffer::utils::io::cyan(const std::string& string) {
     return "\x1b[36m" + string + "\x1b[0m";
 }
@@ -34,6 +38,10 @@ const std::string suffer::utils::io::okay() {
 
 const std::string suffer::utils::io::info() {
     return suffer::utils::io::cyan("[ INFO ]");
+}
+
+const std::string suffer::utils::io::pInfo() {
+    return suffer::utils::io::magenta("[ Package ]");
 }
 
 const std::string suffer::utils::io::dataString(const std::string& data) {

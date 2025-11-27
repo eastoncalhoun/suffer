@@ -6,10 +6,12 @@
 
 #include "./install.hpp"
 #include "./import.hpp"
+#include "./list.hpp"
 
 namespace suffer::commands {
     class Router {
     private:
+        std::string command;
         std::vector<std::string> arguments;
 
     public:
