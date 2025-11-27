@@ -1,3 +1,4 @@
 {
-    "compilerFlags": ""
+    "compilerFlags": "",
+    "cmakeFlags": ""
 }

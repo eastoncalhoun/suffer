@@ -2,8 +2,10 @@
 #include "./install.hpp"
 
 void suffer::commands::install(std::vector<std::string>& args) {
-    if (args.size() == 0) {
-        std::cerr << suffer::utils::io::error() << " Not enough arguments to satisfy install\n" << suffer::utils::io::info() << " Try " << suffer::utils::io::commandString("suffer help\n");
+    if (args.size() < 2) {
+        std::cerr << suffer::utils::io::error() << " Not enough arguments supplied to " << suffer::utils::io::dataString("install") << "\n";
+        std::cout << suffer::utils::io::info() << " Try " << suffer::utils::io::commandString("suffer help\n");
+        exit(EXIT_FAILURE);
     }
 
     suffer::core::RegistryHandler registryHandler = suffer::core::RegistryHandler();

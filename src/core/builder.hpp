@@ -1,10 +1,13 @@
 #pragma once
 
+#include <iostream>
 #include <filesystem>
 #include <string>
 #include <map>
 
 #include "./package.hpp"
+#include "./registryHandler.hpp"
+#include "../utils/io.hpp"
 
 namespace suffer::core {
     enum {
@@ -16,9 +19,22 @@ namespace suffer::core {
 
     class Builder {
     private:
-        const suffer::core::Package& package;
-        int determineHeaderOnlyPackaging();
+        suffer::core::Package& package;
+        suffer::core::RegistryHandler& registry;
+        
+        void checkPermissions(const std::filesystem::path& path);
+        void prevImportDetected();
+        int determineHeaderPackaging();
+        std::vector<std::filesystem::path> getHeadersFromRoot();
+        std::filesystem::path determineStaticLibLocation();
+        std::string determineCompileCommand();
+        std::string determineMakeFile();
+
+        void importHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath);
+
     public:
-        Builder(const suffer::core::Package& package);
+        Builder(suffer::core::Package& package, suffer::core::RegistryHandler& registry);
+
+        void import();
     };
 }

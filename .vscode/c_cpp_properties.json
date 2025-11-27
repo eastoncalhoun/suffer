@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include/nlohmann/",
                 "${workspaceFolder}/include/nlohmann/thirdparty",
-                "${workspaceFolder}/include/nlohmann/detail"
+                "${workspaceFolder}/include/nlohmann/detail",
+                "${workspaceFolder}/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

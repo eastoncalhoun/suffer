@@ -1,9 +1,11 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <vector>
 
 #include "./install.hpp"
+#include "./import.hpp"
 
 namespace suffer::commands {
     class Router {

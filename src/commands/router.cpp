@@ -17,5 +17,7 @@ void suffer::commands::Router::route() {
 
     if (command == "install") {
         return suffer::commands::install(this->arguments);
-    }  
+    } else if (command == "import") {
+        return suffer::commands::import(this->arguments);
+    }
 }
