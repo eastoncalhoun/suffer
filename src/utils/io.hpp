@@ -15,6 +15,7 @@ namespace suffer::utils::io {
     const std::string okay();
     const std::string info();
     const std::string pInfo();
+    const std::string cInfo();
     //default: no
     const std::string yesNo();
     //default: yes

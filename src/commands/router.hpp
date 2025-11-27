@@ -3,10 +3,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
+#include "./constants.hpp"
 #include "./install.hpp"
 #include "./import.hpp"
 #include "./list.hpp"
+#include "./help.hpp"
+#include "./uninstall.hpp"
 
 namespace suffer::commands {
     class Router {

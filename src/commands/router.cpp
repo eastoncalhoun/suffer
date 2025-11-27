@@ -4,7 +4,7 @@ suffer::commands::Router::Router(int argc, char** argv) {
     this->arguments = std::vector<std::string>();
 
     if (argc == 1) {
-        //help command
+        suffer::commands::help(this->arguments);
         exit(EXIT_SUCCESS);
     }
 
@@ -18,11 +18,24 @@ suffer::commands::Router::Router(int argc, char** argv) {
 }
 
 void suffer::commands::Router::route() {
-    if (command == "install") {
-        return suffer::commands::install(this->arguments);
-    } else if (command == "import") {
-        return suffer::commands::import(this->arguments);
-    } else if (command == "list") {
-        return suffer::commands::list(this->arguments);
+    switch (SWITCHED[this->command]) {
+        case HELP:
+            suffer::commands::help(this->arguments);
+            break;
+        case INSTALL:
+            suffer::commands::install(this->arguments);
+            break;
+        case IMPORT:
+            suffer::commands::import(this->arguments);
+            break;
+        case LIST:
+            suffer::commands::list(this->arguments);
+            break;
+        case UNINSTALL:
+            suffer::commands::uninstall(this->arguments);
+            break;
+        default:
+            std::cout << suffer::utils::io::info() << " I want to default on my credit card\n";
+            break;
     }
 }

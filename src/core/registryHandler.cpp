@@ -186,8 +186,6 @@ void suffer::core::RegistryHandler::deletePackage(const std::string& oldPackageN
     Package p = this->findPackage(oldPackageName);
 
     std::filesystem::remove_all(this->LIBS_PATH / oldPackageName);
-
-    std::cout << suffer::utils::io::okay() << " The package " << suffer::utils::io::dataString(oldPackageName) << " has been removed!\n"; 
 }
 
 void suffer::core::RegistryHandler::createPackageJson(suffer::core::Package& newPackage) {

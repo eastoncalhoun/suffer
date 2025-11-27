@@ -3,11 +3,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "../utils/io.hpp"
-#include "../core/package.hpp"
-#include "../core/registryHandler.hpp"
+#include "./constants.hpp"
 
 namespace suffer::commands {
-    void install(std::vector<std::string>& args);
+    void help(std::vector<std::string>& arguments);
 }

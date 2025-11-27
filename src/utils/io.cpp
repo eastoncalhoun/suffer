@@ -44,6 +44,10 @@ const std::string suffer::utils::io::pInfo() {
     return suffer::utils::io::magenta("[ Package ]");
 }
 
+const std::string suffer::utils::io::cInfo() {
+    return suffer::utils::io::green("[ Command ]");
+}
+
 const std::string suffer::utils::io::dataString(const std::string& data) {
     return suffer::utils::io::blue("< " + data + " >");
 }
