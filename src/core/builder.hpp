@@ -42,6 +42,8 @@ namespace suffer::core {
 
         //copies headers from ~/.suffer/lib
         void importHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath);
+        //attempts to detect headers that were built
+        std::vector<std::filesystem::path> detectBuiltHeaders();
         //attempts to compile a lib
         void compileLib();
 
@@ -49,7 +51,7 @@ namespace suffer::core {
         bool isCached();
 
         //dumps json to a file representing dependency order
-        void createProjectJson(int index);
+        void createProjectJson(int index, const std::vector<std::string>& sysLibs);
         //creates a Makefile with the compile command
         void createMakeFile();
 

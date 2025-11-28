@@ -19,3 +19,4 @@ inline std::map<std::string, int> SWITCHED = {
     {"uninstall", UNINSTALL}
 };
 
+//track known flags somehow

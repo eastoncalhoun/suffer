@@ -153,8 +153,33 @@ std::filesystem::path suffer::core::Builder::findStaticLibLocation() {
     exit(EXIT_FAILURE);
 }
 
+std::vector<std::filesystem::path> suffer::core::Builder::detectBuiltHeaders() {
+    std::filesystem::path libPath = this->package.determinePath();
+    std::vector<std::filesystem::path> headers = {};
+
+    for (auto& element : std::filesystem::directory_iterator(libPath)) {
+        const std::filesystem::path elementPath = element.path();
+        const std::string eName = element.path().filename().string();
+        const bool buildish = eName.find("build") != std::string::npos || eName.find("out") != std::string::npos || eName.find("generated")!= std::string::npos;
+
+        if (buildish && element.is_directory())  {
+            for (auto& e : std::filesystem::recursive_directory_iterator(elementPath)) {
+                const std::filesystem::path ePath = e.path();
+                const std::string extension = ePath.filename().extension().string();
+                
+                if (extension == ".h" || extension == ".hpp" || extension == ".hh" || extension == ".hxx") {
+                    headers.push_back(ePath);
+                }
+            }
+        }
+    }
+
+    return headers;
+}
+
 void suffer::core::Builder::compileLib() {
     const std::filesystem::path libPath = this->package.determinePath();
+    const std::filesystem::path include = libPath / "include";
 
     if (!std::filesystem::exists(libPath)) {
         std::cerr << suffer::utils::io::error() << " Library not found at " << suffer::utils::io::dataString(libPath) << "\n";
@@ -164,8 +189,13 @@ void suffer::core::Builder::compileLib() {
     if (std::filesystem::exists(libPath / "CMakeLists.txt")) {
         std::cout << suffer::utils::io::info() << " Detected CMake\n";
 
-        const std::string cmakeGen = "cd " + libPath.string()  + " && cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release";
-        const std::string cmakeBuild = "cd " + libPath.string() + " && cmake --build build --config Release";
+        std::string cmakeGen = "cd " + libPath.string()  + " && cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release";
+        
+        if (this->package.getName() == "cpr") {
+            cmakeGen = cmakeGen + " -DCPR_USE_SYSTEM_CURL=ON";
+        }
+
+        std::string cmakeBuild = "cd " + libPath.string() + " && cmake --build build --config Release";
         
         if (system(cmakeGen.c_str()) != 0) {
             std::cout << suffer::utils::io::error() << " Failed to generate the static CMake build for " << suffer::utils::io::dataString(this->package.getName()) << "\n";
@@ -240,7 +270,7 @@ int suffer::core::Builder::determineLinkingIndex() {
     return jsonObj["link"].size();
 }
 
-void suffer::core::Builder::createProjectJson(int index) {
+void suffer::core::Builder::createProjectJson(int index, const std::vector<std::string>& sysLibs) {
     const std::filesystem::path jsonPath = std::filesystem::current_path() / "suffer.project.json";
 
     //upon running it will already have been proven valid file and json via determineLinkingIndex
@@ -256,9 +286,14 @@ void suffer::core::Builder::createProjectJson(int index) {
 
     projectObj["link"][index].push_back("-l" + this->package.getName());
 
+    for (auto& lib : sysLibs) {
+        projectObj["link"][index].push_back("-l" + lib);
+    }
+
     std::ofstream projectFileOut(jsonPath, std::ios::out | std::ios::trunc);
     
     projectFileOut << projectObj.dump(4);
+    projectFileOut <<  "\n";
     projectFileOut.close();
 }
 
@@ -304,9 +339,11 @@ void suffer::core::Builder::createMakeFile() {
     std::string makeFileText = "";
     makeFileText = makeFileText + "build:\n";
     makeFileText = makeFileText + "\tg++ -o ./out/program -I ./include $(shell find ./src -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\") ";
+
     if (std::filesystem::exists(std::filesystem::current_path() / "lib")) {
         makeFileText = makeFileText + "-L ./lib " + this->determineLinkOrder();
     }
+
     makeFileText = makeFileText + "\nrun:\n";
     makeFileText = makeFileText + "\t./out/program\n";
 
@@ -343,14 +380,19 @@ void suffer::core::Builder::import(int index, bool root) {
     this->importHeaders(include, libPath);
 
     const std::map<std::string, std::string>& dependencies = this->package.getDependencies();
+    std::vector<std::string> sysLibs = {};
 
     for (auto& keyValue : dependencies) {
         std::cout << suffer::utils::io::info() << " Importing dependency " << suffer::utils::io::dataString(keyValue.first) << "\n";
+        
+        if (keyValue.second != "sys") {
+            suffer::core::Package p = registry.findPackage(keyValue.first);
+            suffer::core::Builder builder = suffer::core::Builder(p, this->registry);
 
-        suffer::core::Package p = registry.findPackage(keyValue.first);
-        suffer::core::Builder builder = suffer::core::Builder(p, this->registry);
-
-        builder.import(index, false);
+            builder.import(index, false);
+        } else {
+            sysLibs.push_back(keyValue.first);
+        }
     }
 
     if (!this->package.isHeaderOnly()) {
@@ -374,12 +416,32 @@ void suffer::core::Builder::import(int index, bool root) {
             std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
         } else {
             this->compileLib();
+            
+            std::vector<std::filesystem::path> builtHeaders = this->detectBuiltHeaders();
 
-            std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
+            if (builtHeaders.size() > 0) {
+                std::filesystem::path destiny = libPath / "include";
+                
+                for (auto& element : std::filesystem::directory_iterator(destiny)) {
+                    if (element.is_directory()) {
+                        destiny = element.path();
+                        break;
+                    }
+                }
+
+                for (auto& header : builtHeaders) {
+                    std::filesystem::copy(header, destiny, std::filesystem::copy_options::overwrite_existing);
+                }
+
+                this->importHeaders(include, libPath);
+
+                std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
+            }
+            
         }
     }
 
-    this->createProjectJson(index);
+    this->createProjectJson(index, sysLibs);
 
     if (root) {
         this->createMakeFile();
