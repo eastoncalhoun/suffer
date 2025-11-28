@@ -137,7 +137,185 @@ void suffer::core::Builder::importHeaders(const std::filesystem::path& include, 
     std::cout << suffer::utils::io::okay() << " Copied over headers from " << suffer::utils::io::dataString(this->package.getName()) << "\n";
 }
 
-void suffer::core::Builder::import() {
+std::filesystem::path suffer::core::Builder::findStaticLibLocation() {
+    const std::string libName = "lib" + this->package.getName() + ".a";
+    const std::filesystem::path libPath = this->package.determinePath();
+
+    for (auto& entry : std::filesystem::recursive_directory_iterator(libPath)) {
+        std::string entryName = entry.path().filename().string();
+        
+        if (entryName.find(libName) != std::string::npos && entryName.size() == libName.size()) {
+            return entry.path();
+        }
+    }
+
+    std::cerr << suffer::utils::io::error() << " No " << suffer::utils::io::dataString(libName) << " found in " << suffer::utils::io::dataString(libPath.string());
+    exit(EXIT_FAILURE);
+}
+
+void suffer::core::Builder::compileLib() {
+    const std::filesystem::path libPath = this->package.determinePath();
+
+    if (!std::filesystem::exists(libPath)) {
+        std::cerr << suffer::utils::io::error() << " Library not found at " << suffer::utils::io::dataString(libPath) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    if (std::filesystem::exists(libPath / "CMakeLists.txt")) {
+        std::cout << suffer::utils::io::info() << " Detected CMake\n";
+
+        const std::string cmakeGen = "cd " + libPath.string()  + " && cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release";
+        const std::string cmakeBuild = "cd " + libPath.string() + " && cmake --build build --config Release";
+        
+        if (system(cmakeGen.c_str()) != 0) {
+            std::cout << suffer::utils::io::error() << " Failed to generate the static CMake build for " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+        if (system(cmakeBuild.c_str()) != 0) {
+            std::cout << suffer::utils::io::error() << " CMake failed to compile " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    const std::filesystem::path staticLib = this->findStaticLibLocation();
+
+    if (!std::filesystem::exists(staticLib)) {
+        std::cout << suffer::utils::io::error() << " The supposed library at " << suffer::utils::io::dataString(staticLib.string()) << " does not exist\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::filesystem::copy(staticLib, registry.getCachePath(), std::filesystem::copy_options::overwrite_existing);
+
+    std::cout << suffer::utils::io::okay() << " Successfully compiled and cached " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+}
+
+bool suffer::core::Builder::isCached() {
+    bool cached = false;
+
+    if (std::filesystem::exists(this->package.determineCachePath())) {
+        cached = true;
+    }
+
+    return cached;
+}
+
+int suffer::core::Builder::determineLinkingIndex() {
+    std::filesystem::path filePath = std::filesystem::current_path() / "suffer.project.json";
+    bool newJson = !std::filesystem::exists(filePath);
+    
+    if (newJson) {
+        std::ofstream projectFile(filePath);
+
+        if (!projectFile) {
+            std::cerr << suffer::utils::io::error() << " Failed to open " << suffer::utils::io::dataString(filePath.string()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+
+        projectFile << "{\"link\" : []} ";
+        projectFile.close();
+    }
+
+    std::ifstream jsonFile { filePath };
+    std::string buffer;
+
+    if (!jsonFile) {
+        std::cerr << suffer::utils::io::error() << " Failed to open " << suffer::utils::io::dataString(filePath.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    buffer = std::string(std::istreambuf_iterator<char>(jsonFile), std::istreambuf_iterator<char>());
+    jsonFile.close();
+
+    nlohmann::json jsonObj;
+
+    try {
+        jsonObj = nlohmann::json::parse(buffer);
+    } catch (std::exception& e) {
+        std::cerr << suffer::utils::io::error() << " Invalid json in " << suffer::utils::io::dataString(filePath.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    return jsonObj["link"].size();
+}
+
+void suffer::core::Builder::createProjectJson(int index) {
+    const std::filesystem::path jsonPath = std::filesystem::current_path() / "suffer.project.json";
+
+    //upon running it will already have been proven valid file and json via determineLinkingIndex
+    std::ifstream currProjectFile(jsonPath);
+    std::string jString = std::string(std::istreambuf_iterator<char>(currProjectFile), std::istreambuf_iterator<char>());
+    currProjectFile.close();
+
+    nlohmann::json projectObj = nlohmann::json::parse(jString);
+
+    if (projectObj["link"].size() <= index) {
+        projectObj["link"].push_back(nlohmann::json::array());
+    }
+
+    projectObj["link"][index].push_back("-l" + this->package.getName());
+
+    std::ofstream projectFileOut(jsonPath, std::ios::out | std::ios::trunc);
+    
+    projectFileOut << projectObj.dump(4);
+    projectFileOut.close();
+}
+
+std::string suffer::core::Builder::determineLinkOrder() {
+    std::vector<std::string> links = std::vector<std::string>();
+    std::ifstream projectFile(std::filesystem::current_path() / "suffer.project.json");
+    std::string jString = std::string(std::istreambuf_iterator<char>(projectFile), std::istreambuf_iterator<char>());
+
+    projectFile.close();
+
+    nlohmann::json jObj = nlohmann::json::parse(jString);
+
+    try {
+        for (int i = 0; i < jObj["link"].size(); i++) {
+            for (int j = 0; j < jObj["link"][i].size(); j++) {
+                std::string flag = jObj["link"][i][j].get<std::string>();
+                
+                if (std::find(links.begin(), links.end(), flag) != links.end()) {
+                    continue;
+                } else {
+                    links.push_back(flag);
+                }
+            }
+        }
+    } catch (std::exception& e) {
+        std::cerr << suffer::utils::io::error() << " Invalid suffer.project.json\n";
+        std::cerr << suffer::utils::io::red(e.what()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::string linkOrder = "";
+
+    for (auto& element : links) {
+        linkOrder = linkOrder + " " + element;
+    }
+
+    linkOrder.replace(0, 1, "");
+
+    return linkOrder;
+}
+
+void suffer::core::Builder::createMakeFile() {
+    std::string makeFileText = "";
+    makeFileText = makeFileText + "build:\n";
+    makeFileText = makeFileText + "\tg++ -o ./out/program -I ./include $(shell find ./src -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\") ";
+    if (std::filesystem::exists(std::filesystem::current_path() / "lib")) {
+        makeFileText = makeFileText + "-L ./lib " + this->determineLinkOrder();
+    }
+    makeFileText = makeFileText + "\nrun:\n";
+    makeFileText = makeFileText + "\t./out/program\n";
+
+    std::ofstream makeFile(std::filesystem::current_path() / "Makefile", std::ios::trunc);
+    makeFile << makeFileText;
+    makeFile.close();
+}
+
+void suffer::core::Builder::import(int index, bool root) {
     std::cout << suffer::utils::io::okay() << " Attempting to import " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
 
     const std::filesystem::path libPath = this->package.determinePath();
@@ -168,14 +346,53 @@ void suffer::core::Builder::import() {
 
     for (auto& keyValue : dependencies) {
         std::cout << suffer::utils::io::info() << " Importing dependency " << suffer::utils::io::dataString(keyValue.first) << "\n";
+
         suffer::core::Package p = registry.findPackage(keyValue.first);
         suffer::core::Builder builder = suffer::core::Builder(p, this->registry);
 
-        builder.import();
+        builder.import(index, false);
     }
 
     if (!this->package.isHeaderOnly()) {
-        std::cout << suffer::utils::io::info() << " Building " << suffer::utils::io::dataString(this->package.getName());
+        const std::filesystem::path buildPath = std::filesystem::current_path() / "lib";
+        const std::string libName = "lib" + this->package.getName() + ".a";
+
+        if (!std::filesystem::exists(buildPath)) {
+            std::cout << suffer::utils::io::info() << " No project /lib directory detected\n";
+
+            if (!std::filesystem::create_directory(buildPath)) {
+                std::cerr << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(buildPath) << "\n";
+                exit(EXIT_FAILURE);
+            }
+
+            std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(buildPath.string()) << "\n";
+        }
+
+        std::cout << suffer::utils::io::info() << " Checking cache for " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+
+        if (this->isCached()) {
+            std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
+        } else {
+            this->compileLib();
+
+            std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
+        }
+    }
+
+    this->createProjectJson(index);
+
+    if (root) {
+        this->createMakeFile();
+    }
+
+    std::filesystem::path src = std::filesystem::current_path() / "src";
+
+    if (!std::filesystem::exists(src)) {
+        std::filesystem::create_directory(src);
+        std::ofstream mainCpp(src / "main.cpp");
+
+        mainCpp << "";
+        mainCpp.close();
     }
 
     std::cout << suffer::utils::io::okay() << " Successfully imported " << suffer::utils::io::dataString(this->package.getName()) << "\n";

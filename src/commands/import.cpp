@@ -7,16 +7,9 @@ void suffer::commands::import(std::vector<std::string>& args) {
         exit(EXIT_FAILURE);
     }
 
-    std::cout << suffer::utils::io::info() << " Currently, only header libs are supported\n";
-
     suffer::core::RegistryHandler registry = suffer::core::RegistryHandler();
     suffer::core::Package package = registry.findPackage(args[0]);
     suffer::core::Builder builder = suffer::core::Builder(package, registry);
 
-    if (!package.isHeaderOnly()) {
-        std::cerr << suffer::utils::io::error() << " Non header only lib detected :(\n";
-        exit(EXIT_FAILURE);
-    }
-
-    builder.import();    
+    builder.import(builder.determineLinkingIndex());    
 }

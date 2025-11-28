@@ -6,7 +6,7 @@
 #include <map>
 
 #include "../utils/io.hpp"
-#include "./constants.hpp"
+#include "../utils/constants.hpp"
 
 namespace suffer::commands {
     void help(std::vector<std::string>& arguments);

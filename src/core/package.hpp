@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <string>
 #include <map>
 #include <filesystem>
@@ -7,6 +8,8 @@
 #include <unistd.h>
 
 #include "../../include/nlohmann/json.hpp"
+
+#include "../utils/io.hpp"
 
 namespace suffer::core {
     
@@ -38,5 +41,7 @@ namespace suffer::core {
         static Package nullPackage();
         //The package's path. Probably.
         const std::filesystem::path determinePath();
+        //The package's .a path. Probably..
+        const std::filesystem::path determineCachePath();
     };
 }

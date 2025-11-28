@@ -4,6 +4,9 @@
 #include <filesystem>
 #include <string>
 #include <map>
+#include <vector>
+
+#include "../../include/nlohmann/json.hpp"
 
 #include "./package.hpp"
 #include "./registryHandler.hpp"
@@ -21,20 +24,41 @@ namespace suffer::core {
     private:
         suffer::core::Package& package;
         suffer::core::RegistryHandler& registry;
-        
-        void checkPermissions(const std::filesystem::path& path);
-        void prevImportDetected();
-        int determineHeaderPackaging();
-        std::vector<std::filesystem::path> getHeadersFromRoot();
-        std::filesystem::path determineStaticLibLocation();
-        std::string determineCompileCommand();
-        std::string determineMakeFile();
 
+        //returns an enum type, defaults to UNKNOWN
+        int determineHeaderPackaging();
+        //returns a string of the order in which to link
+        std::string determineLinkOrder();
+        //called if the header structure is determined to be RT_H_STYLE
+        std::vector<std::filesystem::path> getHeadersFromRoot();;
+        
+        //checks for rw, errors out if none
+        void checkPermissions(const std::filesystem::path& path);
+        //promts users if they want to overwrite an existing import
+        void prevImportDetected();
+        
+        //finds the compiled .a file inside ~/.suffer/lib - ran after compilation
+        std::filesystem::path findStaticLibLocation();
+
+        //copies headers from ~/.suffer/lib
         void importHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath);
+        //attempts to compile a lib
+        void compileLib();
+
+        //checks if lib.a exits
+        bool isCached();
+
+        //dumps json to a file representing dependency order
+        void createProjectJson(int index);
+        //creates a Makefile with the compile command
+        void createMakeFile();
 
     public:
         Builder(suffer::core::Package& package, suffer::core::RegistryHandler& registry);
 
-        void import();
+        //returns the index which -lLIB needs to be added in suffer.project.json
+        int determineLinkingIndex();
+        //execute method
+        void import(int index, bool root = true);
     };
 }
