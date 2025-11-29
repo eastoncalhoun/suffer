@@ -11,7 +11,7 @@ void suffer::commands::install(std::vector<std::string>& args) {
     const std::filesystem::path start = std::filesystem::current_path();
     std::map<std::string, std::string> dependencies = std::map<std::string, std::string>();
     bool headerOnly = true;
-    std::string input, dualieInput, version, author, name, source;
+    std::string input, dualieInput, version, author, name, source, flags;
     
 
     if (local) {
@@ -82,7 +82,7 @@ void suffer::commands::install(std::vector<std::string>& args) {
         std::cout << suffer::utils::io::okay() << " suffer.json found\n";
 
         try {
-            std::filesystem::copy(std::filesystem::current_path(), registryHandler.getLibsPath() / name, std::filesystem::copy_options::recursive);
+            std::filesystem::copy(std::filesystem::current_path(), registryHandler.getLibsPath() / name, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
             std::cout << suffer::utils::io::okay() << " Successfully installed " << suffer::utils::io::dataString(name) << "\n";
             return;
         } catch (std::exception& e) {
@@ -90,46 +90,62 @@ void suffer::commands::install(std::vector<std::string>& args) {
             exit(EXIT_FAILURE);
         }
     }
-    
-    if (local) {
-        std::cout << "Package author: ";
-        std::cin >> author;
-    } 
 
-    std::cout << "Package version: ";
-    std::cin >> version;
-
-    std::cout << "Is this library only headers? " << suffer::utils::io::noYes();
+    std::cout << suffer::utils::io::info() << " Would you like to generate a blank " << suffer::utils::io::dataString(std::filesystem::current_path() / "suffer.json") << suffer::utils::io::yesNo();
     std::cin >> input;
 
-    if (input == "n" || input == "no") {
-        headerOnly = false;
-    }
+    if (input != "n" || input != "no") {
+        version = "unknown";
+        headerOnly = true;
+        flags = "";
 
-    std::cout << "Are there any dependencies? " << suffer::utils::io::yesNo();
-    std::cin >> input;
+        if (local) {
+            author = "unknown";
+        }
+    } else {
+        if (local) {
+            std::cout << "Package author: ";
+            std::cin >> author;
+        } 
 
-    if (input == "y" || input == "yes") {
-        while (true) {
-            std::cout << "Dependency name: ";
-            std::cin >> input;
-            std::cout << "Dependency version: ";
-            std::cin >> dualieInput;
+        std::cout << "Package version: ";
+        std::cin >> version;
 
-            dependencies[input] = dualieInput;
+        std::cout << "Is this library only headers? " << suffer::utils::io::noYes();
+        std::cin >> input;
 
-            std::cout << "More dependencies? " << suffer::utils::io::yesNo();
-            std::cin >> input;
+        if (input == "n" || input == "no") {
+            headerOnly = false;
+        }
 
-            if (input == "y" || input == "yes") {
-                continue;
-            } else {
-                break;
+        std::cout << "Cmake flags: ";
+        std::cin >> flags;
+
+        std::cout << "Are there any dependencies? " << suffer::utils::io::yesNo();
+        std::cin >> input;
+
+        if (input == "y" || input == "yes") {
+            while (true) {
+                std::cout << "Dependency name: ";
+                std::cin >> input;
+                std::cout << "Dependency version: ";
+                std::cin >> dualieInput;
+
+                dependencies[input] = dualieInput;
+
+                std::cout << "More dependencies? " << suffer::utils::io::yesNo();
+                std::cin >> input;
+
+                if (input == "y" || input == "yes") {
+                    continue;
+                } else {
+                    break;
+                }
             }
         }
     }
 
-    suffer::core::Package package = suffer::core::Package(name, version, author, source, headerOnly, dependencies);
+    suffer::core::Package package = suffer::core::Package(name, version, author, source, headerOnly, flags, dependencies);
 
     std::cout << suffer::utils::io::info() << " Does this look correct?\n";
     std::cout << package.toJsonText() << suffer::utils::io::noYes();

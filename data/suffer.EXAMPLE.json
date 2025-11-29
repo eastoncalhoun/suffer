@@ -7,5 +7,6 @@
     "dependencies": {
         "packageA": "version",
         "packageB": "version"
-    }
+    },
+    "flags": "-CMAKE -FLAGS"
 }

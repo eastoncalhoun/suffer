@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <filesystem>
+#include <fstream>
 
 #include <unistd.h>
 
@@ -19,18 +20,22 @@ namespace suffer::core {
         std::string version;
         std::string author;
         std::string source;
+        std::string flags;
 
         bool headerOnly;
 
         std::map<std::string, std::string> dependencies;
 
     public:
-        Package(const std::string& name, const std::string& version, const std::string& author, const std::string& source, const bool headerOnly, const std::map<std::string, std::string>& dependencies);
+        Package(const std::string& name, const std::string& version, const std::string& author, const std::string& source, const bool headerOnly, const std::string& flags, const std::map<std::string, std::string>& dependencies);
+        
+        static Package pathFactory(std::filesystem::path path);
 
         const std::string& getName();
         const std::string& getVersion();
         const std::string& getAuthor();
         const std::string& getSource();
+        const std::string& getFlags();
         const std::map<std::string, std::string>& getDependencies();
 
         const bool isHeaderOnly();

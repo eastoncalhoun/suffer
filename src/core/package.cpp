@@ -1,12 +1,13 @@
 #include "./package.hpp"
 
-suffer::core::Package::Package(const std::string& name, const std::string& version, const std::string& author, const std::string& source, const bool headerOnly, const std::map<std::string, std::string>& dependencies) {
+suffer::core::Package::Package(const std::string& name, const std::string& version, const std::string& author, const std::string& source, const bool headerOnly, const std::string& flags, const std::map<std::string, std::string>& dependencies) {
     this->name = name;
     this->version = version;
     this->author = author;
     this->source = source;
     this->headerOnly = headerOnly;
     this->dependencies = dependencies;
+    this->flags = flags;
 }
 
 const std::string& suffer::core::Package::getName() {
@@ -23,6 +24,10 @@ const std::string& suffer::core::Package::getAuthor() {
 
 const std::string& suffer::core::Package::getSource() {
     return this->source;
+}
+
+const std::string& suffer::core::Package::getFlags() {
+    return this->flags;
 }
 
 const std::map<std::string, std::string>& suffer::core::Package::getDependencies() {
@@ -51,7 +56,8 @@ const std::string suffer::core::Package::toJsonText() {
         {"version", this->version},
         {"author", this->author},
         {"source", this->source},
-        {"headerOnly", this->headerOnly}
+        {"headerOnly", this->headerOnly},
+        {"flags", this->flags}
     };
 
     pJ["dependencies"] = {};
@@ -64,7 +70,7 @@ const std::string suffer::core::Package::toJsonText() {
 }
 
 suffer::core::Package suffer::core::Package::nullPackage() {
-    return suffer::core::Package("null", "null", "null", "null", false, std::map<std::string, std::string>());
+    return suffer::core::Package("null", "null", "null", "null", false, "null", std::map<std::string, std::string>());
 }
 
 const std::filesystem::path suffer::core::Package::determinePath() {
@@ -88,4 +94,49 @@ const std::filesystem::path suffer::core::Package::determineCachePath() {
     }
 
     return cachePath;
+}
+
+suffer::core::Package suffer::core::Package::pathFactory(std::filesystem::path path) {
+    std::ifstream pFile(path);
+
+    if (!pFile) {
+        std::cerr << suffer::utils::io::error() <<  " Failed to open the file " << suffer::utils::io::dataString(path.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
+    
+    pFile.close();
+
+    nlohmann::json pJson = nlohmann::json(); 
+    std::string pName;
+    std::map<std::string, std::string> deps;
+
+    try {
+        pJson = nlohmann::json::parse(fData);
+    } catch (std::exception& e) {
+        std::cerr << suffer::utils::io::error() << " Invalid json at " << suffer::utils::io::dataString(path.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    try {
+        deps = pJson["dependencies"].get<std::map<std::string, std::string>>();
+    } catch (std::exception& e) {
+        deps = std::map<std::string, std::string>();
+    }
+
+    try {
+        return suffer::core::Package(
+            pJson["package"].get<std::string>(),
+            pJson["version"].get<std::string>(),
+            pJson["author"].get<std::string>(),
+            pJson["source"].get<std::string>(),
+            pJson["headerOnly"].get<bool>(),
+            pJson["flags"].get<std::string>(),
+            deps
+        );
+    } catch (std::exception& e) {
+        std::cout << suffer::utils::io::warning() << " Invalid json at " << suffer::utils::io::dataString(path.string()) << "\n" << e.what() << "\n";
+        return suffer::core::Package::nullPackage();
+    }
 }

@@ -78,50 +78,7 @@ const std::vector<suffer::core::Package> suffer::core::RegistryHandler::getAllPa
     std::vector<suffer::core::Package> packages = {};
 
     for (auto entry : std::filesystem::directory_iterator(this->LIBS_PATH)) {
-        std::filesystem::path pPath = entry.path() / "suffer.json";
-        
-        if (!std::filesystem::exists(pPath)) {
-            std::cout << suffer::utils::io::warning() << " No suffer.json file found at " + suffer::utils::io::dataString(pPath.string()) + "\nIf this is a package, you must create a suffer.json file at " << suffer::utils::io::dataString(entry.path().string()) << ". Try a reinstall?\n";
-        }
-
-        std::ifstream pFile = { pPath };
-
-        if (!pFile) {
-            std::cerr << suffer::utils::io::error() << "Failed to open " << suffer::utils::io::dataString(pPath.string()) << "\n";
-            exit(EXIT_FAILURE);
-        }
-
-        std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
-        
-        pFile.close();
-
-        nlohmann::json pJson = nlohmann::json();
-        std::map<std::string, std::string> deps;
-
-        try {
-            pJson = nlohmann::json::parse(fData);
-            pJson.value("package", "undefined");
-        } catch (std::exception& e) {
-            std::cerr << suffer::utils::io::error() << " Invalid json at " << suffer::utils::io::dataString(pPath.string()) << "\n";
-            exit(EXIT_FAILURE);
-        }
-
-        try {
-            deps = pJson["dependencies"].get<std::map<std::string, std::string>>();
-        } catch (std::exception& e) {
-            deps = std::map<std::string, std::string>();
-        }
-
-        suffer::core::Package package = suffer::core::Package(
-            pJson.value("package", "undefined"),
-            pJson.value("version", "undefined"),
-            pJson.value("author", "undefined"),
-            pJson.value("source", "undefined"),
-            pJson.value("headerOnly", false),
-            deps
-        );
-
-        packages.push_back(package);
+        packages.push_back(suffer::core::Package::pathFactory(entry.path() / "suffer.json"));
     }
 
     return packages;
@@ -137,45 +94,9 @@ const suffer::core::Package suffer::core::RegistryHandler::findPackage(const std
 
         if (entry.path().filename().string().find(name) == std::string::npos || entry.path().filename().string().size() != name.size()) {
             continue;
-        }
+        } 
 
-        std::ifstream pFile = { pPath };
-
-        if (!pFile) {
-            std::cerr << suffer::utils::io::error() <<  " Failed to open the file " << suffer::utils::io::dataString(pPath.string()) << "\n";
-            exit(EXIT_FAILURE);
-        }
-
-        std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
-        
-        pFile.close();
-
-        nlohmann::json pJson = nlohmann::json(); 
-        std::string pName;
-        std::map<std::string, std::string> deps;
-
-        try {
-            pJson = nlohmann::json::parse(fData);
-            pJson.value("package", "undefined");
-        } catch (std::exception& e) {
-            std::cerr << suffer::utils::io::error() << " Invalid json at " << suffer::utils::io::dataString(pPath.string()) << "\n";
-            exit(EXIT_FAILURE);
-        }
-
-        try {
-            deps = pJson["dependencies"].get<std::map<std::string, std::string>>();
-        } catch (std::exception& e) {
-            deps = std::map<std::string, std::string>();
-        }
-
-        return suffer::core::Package(
-            pJson.value("package", "undefined"),
-            pJson.value("version", "undefined"),
-            pJson.value("author", "undefined"),
-            pJson.value("source", "undefined"),
-            pJson.value("headerOnly", false),
-            deps
-        );
+        return suffer::core::Package::pathFactory(pPath);        
     }
 
     std::cerr << suffer::utils::io::error() << " The package " << suffer::utils::io::dataString(name) << " was not found in the registry\n";

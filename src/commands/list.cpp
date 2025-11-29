@@ -20,13 +20,14 @@ void suffer::commands::list(std::vector<std::string>& arguments) {
         }
 
         std::cout << suffer::utils::io::pInfo() << " " << suffer::utils::io::dataString(package.getName()) << "\n";
-        std::cout << suffer::utils::io::yellow("\tAuthor: ") << suffer::utils::io::dataString(package.getAuthor()) << "\n";
-        std::cout << suffer::utils::io::yellow("\tVersion: ") << suffer::utils::io::dataString(package.getVersion()) << "\n";
-        std::cout << suffer::utils::io::yellow("\tSource: ") << suffer::utils::io::dataString(package.getSource()) << "\n";
-        std::cout << suffer::utils::io::yellow("\tHeader Only: ") << suffer::utils::io::dataString(hOnly) << "\n";
+        std::cout << suffer::utils::io::cyan("\tAuthor: ") << suffer::utils::io::dataString(package.getAuthor()) << "\n";
+        std::cout << suffer::utils::io::cyan("\tVersion: ") << suffer::utils::io::dataString(package.getVersion()) << "\n";
+        std::cout << suffer::utils::io::cyan("\tSource: ") << suffer::utils::io::dataString(package.getSource()) << std::endl;
+        std::cout << suffer::utils::io::cyan("\tFlags: ") << suffer::utils::io::dataString(package.getFlags()) << "\n";
+        std::cout << suffer::utils::io::cyan("\tHeader Only: ") << suffer::utils::io::dataString(hOnly) << "\n";
 
         for (auto& dep : package.getDependencies()) {
-            std::cout << suffer::utils::io::yellow("\tDependency: ") << suffer::utils::io::dataString(dep.first + "^" + dep.second) << "\n";
+            std::cout << suffer::utils::io::cyan("\tDependency: ") << suffer::utils::io::dataString(dep.first + "^" + dep.second) << "\n";
         }
     }
 }

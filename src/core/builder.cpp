@@ -74,26 +74,13 @@ void suffer::core::Builder::importHeaders(const std::filesystem::path& include, 
     
     switch (packaging) {
         case SI_H_HEADER_STYLE:
-            for (auto& element : std::filesystem::directory_iterator(libPath / "single_include")) {
-                if (std::filesystem::exists(include / element.path().filename()) && !prevAcknowledged) {
-                    this->prevImportDetected();
-                    prevAcknowledged = true;
-                }
-
+            for (auto& element : std::filesystem::directory_iterator(include)) {
                 std::filesystem::copy(element.path(), include / element.path().filename(), std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
             }
 
             break;
 
         case IH_H_HEADER_STYLE:
-            for (auto& element : std::filesystem::directory_iterator(libPath / "include")) {
-                if (std::filesystem::exists(include / element.path().filename()) && !prevAcknowledged) {
-                    this->prevImportDetected();
-                    prevAcknowledged = true;
-                    break;
-                }
-            }
-
             std::filesystem::copy(libPath / "include", include, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
 
             break;
@@ -111,11 +98,6 @@ void suffer::core::Builder::importHeaders(const std::filesystem::path& include, 
             }
 
             for (auto& header : headers) {
-                if (std::filesystem::exists(includeProject / header.filename()) && !prevAcknowledged) {
-                    this->prevImportDetected();
-                    prevAcknowledged = true;
-                }
-
                 std::filesystem::copy(header, includeProject, std::filesystem::copy_options::overwrite_existing);
             }
 
@@ -189,12 +171,8 @@ void suffer::core::Builder::compileLib() {
     if (std::filesystem::exists(libPath / "CMakeLists.txt")) {
         std::cout << suffer::utils::io::info() << " Detected CMake\n";
 
-        std::string cmakeGen = "cd " + libPath.string()  + " && cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release";
-        
-        if (this->package.getName() == "cpr") {
-            cmakeGen = cmakeGen + " -DCPR_USE_SYSTEM_CURL=ON";
-        }
-
+        std::string flags = this->package.getFlags();
+        std::string cmakeGen = "cd " + libPath.string()  + " && cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release " + flags;
         std::string cmakeBuild = "cd " + libPath.string() + " && cmake --build build --config Release";
         
         if (system(cmakeGen.c_str()) != 0) {
@@ -353,10 +331,13 @@ void suffer::core::Builder::createMakeFile() {
 }
 
 void suffer::core::Builder::import(int index, bool root) {
-    std::cout << suffer::utils::io::okay() << " Attempting to import " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
+    std::cout << suffer::utils::io::info() << " Attempting to import " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
 
     const std::filesystem::path libPath = this->package.determinePath();
-    const std::filesystem::path include = std::filesystem::current_path() / "include";
+    const std::filesystem::path curr = std::filesystem::current_path();
+    const std::filesystem::path include = curr / "include";
+    const std::filesystem::path src = curr / "src";
+    const std::filesystem::path out = curr / "out";
 
     this->checkPermissions(libPath);
     this->checkPermissions(include);
@@ -383,14 +364,13 @@ void suffer::core::Builder::import(int index, bool root) {
     std::vector<std::string> sysLibs = {};
 
     for (auto& keyValue : dependencies) {
-        std::cout << suffer::utils::io::info() << " Importing dependency " << suffer::utils::io::dataString(keyValue.first) << "\n";
-        
         if (keyValue.second != "sys") {
             suffer::core::Package p = registry.findPackage(keyValue.first);
             suffer::core::Builder builder = suffer::core::Builder(p, this->registry);
 
             builder.import(index, false);
         } else {
+            std::cout << suffer::utils::io::info() << " System Dependency " << suffer::utils::io::dataString(keyValue.first) << "\n";
             sysLibs.push_back(keyValue.first);
         }
     }
@@ -431,9 +411,8 @@ void suffer::core::Builder::import(int index, bool root) {
 
                 for (auto& header : builtHeaders) {
                     std::filesystem::copy(header, destiny, std::filesystem::copy_options::overwrite_existing);
+                    std::filesystem::copy(header, include / this->package.getName());
                 }
-
-                this->importHeaders(include, libPath);
 
                 std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
             }
@@ -447,14 +426,16 @@ void suffer::core::Builder::import(int index, bool root) {
         this->createMakeFile();
     }
 
-    std::filesystem::path src = std::filesystem::current_path() / "src";
-
     if (!std::filesystem::exists(src)) {
         std::filesystem::create_directory(src);
         std::ofstream mainCpp(src / "main.cpp");
 
         mainCpp << "";
         mainCpp.close();
+    }
+
+    if (!std::filesystem::exists(out)) {
+        std::filesystem::create_directories(out);
     }
 
     std::cout << suffer::utils::io::okay() << " Successfully imported " << suffer::utils::io::dataString(this->package.getName()) << "\n";

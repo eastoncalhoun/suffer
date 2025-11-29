@@ -49,7 +49,7 @@ const std::string suffer::utils::io::cInfo() {
 }
 
 const std::string suffer::utils::io::dataString(const std::string& data) {
-    return suffer::utils::io::blue("< " + data + " >");
+    return suffer::utils::io::blue("< ") + suffer::utils::io::red(data) + suffer::utils::io::blue(" >");
 }
 
 const std::string suffer::utils::io::commandString(const std::string& cmd) {
