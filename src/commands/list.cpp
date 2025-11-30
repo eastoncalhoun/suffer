@@ -6,6 +6,8 @@ void suffer::commands::list(std::vector<std::string>& arguments) {
     if (arguments.size() < 1) {
         std::vector<suffer::core::Package> packages = registry.getAllPackages(); 
 
+        std::cout << suffer::utils::io::info() << " Installed Packages\n";
+
         for (auto& package : packages) {
             std::cout << suffer::utils::io::pInfo() << " " << suffer::utils::io::dataString(package.getName()) << "\n"; 
         }

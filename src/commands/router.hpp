@@ -11,6 +11,8 @@
 #include "./list.hpp"
 #include "./help.hpp"
 #include "./uninstall.hpp"
+#include "./clean.hpp"
+#include "./init.hpp"
 
 namespace suffer::commands {
     class Router {

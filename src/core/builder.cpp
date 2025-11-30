@@ -19,9 +19,9 @@ int suffer::core::Builder::determineHeaderPackaging() {
     }
 
     if (std::filesystem::exists(pPath / "single_include")) {
-        type = SI_H_HEADER_STYLE;
+        type = SI_H_STYLE;
     } else if (std::filesystem::exists(pPath / "include")) {
-        type = IH_H_HEADER_STYLE;
+        type = IH_H_STYLE;
     } else if (this->getHeadersFromRoot().size() > 0) {
         type = RT_H_STYLE;
     }
@@ -64,23 +64,25 @@ void suffer::core::Builder::prevImportDetected() {
 void suffer::core::Builder::importHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath) {
     //only used if RTH_H_STYLE
     const std::filesystem::path includeProject = include / this->package.getName();
+    //only used if SI_H_HEADER_STYLE
+    const std::filesystem::path sInclude = libPath / "single_include";
+    const int packaging = this->determineHeaderPackaging();
 
     auto headers = std::vector<std::filesystem::path>();
-    const int packaging = this->determineHeaderPackaging();
     bool prevAcknowledged = false;
 
     //if the /project/includes dir contains some of the registry's headers already, prompt user for re import.  
     std::vector<std::filesystem::path> libIncludePaths = std::vector<std::filesystem::path>();
     
     switch (packaging) {
-        case SI_H_HEADER_STYLE:
-            for (auto& element : std::filesystem::directory_iterator(include)) {
+        case SI_H_STYLE:
+            for (auto& element : std::filesystem::directory_iterator(sInclude)) {
                 std::filesystem::copy(element.path(), include / element.path().filename(), std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
             }
 
             break;
 
-        case IH_H_HEADER_STYLE:
+        case IH_H_STYLE:
             std::filesystem::copy(libPath / "include", include, std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing);
 
             break;
@@ -336,8 +338,8 @@ void suffer::core::Builder::import(int index, bool root) {
     const std::filesystem::path libPath = this->package.determinePath();
     const std::filesystem::path curr = std::filesystem::current_path();
     const std::filesystem::path include = curr / "include";
-    const std::filesystem::path src = curr / "src";
-    const std::filesystem::path out = curr / "out";
+
+    this->setupProject();
 
     this->checkPermissions(libPath);
     this->checkPermissions(include);
@@ -347,19 +349,6 @@ void suffer::core::Builder::import(int index, bool root) {
         exit(EXIT_FAILURE);
     }
     
-    if (!std::filesystem::exists(include)) {
-        std::cerr << suffer::utils::io::info() << " No project /include directory detected\n";
-
-        if (std::filesystem::create_directory(include)) {
-            std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(include.string()) << "\n";
-        } else {
-            std::cout << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(include.string()) << "\n";
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    this->importHeaders(include, libPath);
-
     const std::map<std::string, std::string>& dependencies = this->package.getDependencies();
     std::vector<std::string> sysLibs = {};
 
@@ -374,6 +363,8 @@ void suffer::core::Builder::import(int index, bool root) {
             sysLibs.push_back(keyValue.first);
         }
     }
+
+    this->importHeaders(include, libPath);
 
     if (!this->package.isHeaderOnly()) {
         const std::filesystem::path buildPath = std::filesystem::current_path() / "lib";
@@ -390,9 +381,8 @@ void suffer::core::Builder::import(int index, bool root) {
             std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(buildPath.string()) << "\n";
         }
 
-        std::cout << suffer::utils::io::info() << " Checking cache for " << suffer::utils::io::dataString(this->package.getName()) << "\n";
-
         if (this->isCached()) {
+            std::cout << suffer::utils::io::info() << " Found " << suffer::utils::io::dataString(this->package.determineCachePath().string()) << " using cached version\n"; 
             std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
         } else {
             this->compileLib();
@@ -415,22 +405,44 @@ void suffer::core::Builder::import(int index, bool root) {
                 }
 
                 std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
+                this->createProjectJson(index, sysLibs);
             }
-            
         }
     }
-
-    this->createProjectJson(index, sysLibs);
 
     if (root) {
         this->createMakeFile();
     }
 
+    std::cout << suffer::utils::io::okay() << " Successfully imported " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+}
+
+void suffer::core::Builder::setupProject() {
+    const std::filesystem::path curr = std::filesystem::current_path();
+    const std::filesystem::path include = curr / "include";
+    const std::filesystem::path src = curr / "src";
+    const std::filesystem::path out = curr / "out";
+
+    if (!std::filesystem::exists(include)) {
+        if (std::filesystem::create_directory(include)) {
+            std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(include.string()) << "\n";
+        } else {
+            std::cout << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(include.string()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+    }
+
     if (!std::filesystem::exists(src)) {
-        std::filesystem::create_directory(src);
+        if (std::filesystem::create_directory(src)) {
+            std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(src.string()) << "\n";
+        } else {
+            std::cout << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(src.string()) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
         std::ofstream mainCpp(src / "main.cpp");
 
-        mainCpp << "";
+        mainCpp << "#include <iostream>\n\nint main(int argc, char** argv) {\n\tstd::cout << \"Hello from suffer\" << std::endl;\n\treturn 0;\n}\n";
         mainCpp.close();
     }
 
@@ -438,7 +450,7 @@ void suffer::core::Builder::import(int index, bool root) {
         std::filesystem::create_directories(out);
     }
 
-    std::cout << suffer::utils::io::okay() << " Successfully imported " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+    this->createMakeFile();
 }
 
 suffer::core::Builder::Builder(suffer::core::Package& package, suffer::core::RegistryHandler& registry): package(package), registry(registry) {}

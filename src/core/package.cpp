@@ -104,7 +104,7 @@ suffer::core::Package suffer::core::Package::pathFactory(std::filesystem::path p
         exit(EXIT_FAILURE);
     }
 
-    std::string fData = std::string(std::istreambuf_iterator<char>(pFile), std::istreambuf_iterator<char>());
+    std::string fData = std::string(std::istreambuf_iterator<char>(pFile),std::istreambuf_iterator<char>());
     
     pFile.close();
 
@@ -137,6 +137,7 @@ suffer::core::Package suffer::core::Package::pathFactory(std::filesystem::path p
         );
     } catch (std::exception& e) {
         std::cout << suffer::utils::io::warning() << " Invalid json at " << suffer::utils::io::dataString(path.string()) << "\n" << e.what() << "\n";
+
         return suffer::core::Package::nullPackage();
     }
 }

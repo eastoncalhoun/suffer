@@ -18,6 +18,7 @@ suffer::commands::Router::Router(int argc, char** argv) {
 }
 
 void suffer::commands::Router::route() {
+    //SWITCHED is an unordered map in utils/constants.h
     switch (SWITCHED[this->command]) {
         case HELP:
             suffer::commands::help(this->arguments);
@@ -34,8 +35,14 @@ void suffer::commands::Router::route() {
         case UNINSTALL:
             suffer::commands::uninstall(this->arguments);
             break;
+        case CLEAN:
+            suffer::commands::clean(this->arguments);
+            break;
+        case INIT:
+            suffer::commands::init();
+            break;
         default:
-            std::cout << suffer::utils::io::info() << " I want to default on my credit card\n";
+            std::cout << suffer::utils::io::error() << " Command not found\n";
             break;
     }
 }

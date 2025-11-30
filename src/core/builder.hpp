@@ -14,8 +14,8 @@
 
 namespace suffer::core {
     enum {
-        IH_H_HEADER_STYLE,
-        SI_H_HEADER_STYLE,
+        IH_H_STYLE,
+        SI_H_STYLE,
         RT_H_STYLE,
         UNKNOWN
     };
@@ -62,5 +62,7 @@ namespace suffer::core {
         int determineLinkingIndex();
         //execute method
         void import(int index, bool root = true);
+        //sets up a new suffer project
+        void setupProject();
     };
 }

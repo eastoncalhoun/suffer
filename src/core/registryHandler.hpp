@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <optional>
 
 #include <unistd.h>
 
@@ -24,7 +25,7 @@ namespace suffer::core {
 
         //throws an error if failed to create at a path
         void checkCreated(const bool CREATED, const std::filesystem::path& PATH);
-        nlohmann::json generateSettings();        
+        nlohmann::json generateSettings();     
 
     public:
         static const std::filesystem::path getRegistryPath();
@@ -40,7 +41,9 @@ namespace suffer::core {
         const std::vector<suffer::core::Package> getAllPackages();
         const suffer::core::Package findPackage(const std::string& name);
 
-        void deletePackage(const std::string& oldPackageName);        
+        void deletePackage(const std::string& oldPackageName);
+        
+        std::optional<nlohmann::json> knownPackage(const std::string& pName);
         
         RegistryHandler();
     };

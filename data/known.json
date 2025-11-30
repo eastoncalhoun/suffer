@@ -1,0 +1,44 @@
+{
+    "cpr": {
+        "author": "libcpr",
+        "flags": "-DCPR_USE_SYSTEM_CURL=ON",
+        "dependencies": {
+            "curl": "sys",
+            "ssl": "sys",
+            "crypto": "sys",
+            "pthread": "sys",
+            "z": "sys"
+        },
+        "headerOnly": false,
+        "package": "cpr",
+        "source": "https://github.com/libcpr/cpr",
+        "version": "unknown"
+    },
+    "fmt" : {
+        "author": "fmtlib",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": false,
+        "package": "fmt",
+        "source": "https://github.com/fmtlib/fmt",
+        "version": "unknown"
+    },
+    "spdlog": {
+        "author": "gabime",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": false,
+        "package": "spdlog",
+        "source": "https://github.com/gabime/spdlog",
+        "version": "unknown"
+    },
+    "json": {
+        "author": "nlohmann",
+        "dependencies": null,
+        "headerOnly": true,
+        "package": "json",
+        "source": "https://github.com/nlohmann/json",
+        "version": "unknown",
+        "flags": ""
+    }
+}

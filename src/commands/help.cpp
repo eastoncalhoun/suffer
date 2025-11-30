@@ -10,6 +10,8 @@ void suffer::commands::help(std::vector<std::string>& arguments) {
         std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" import\t") << suffer::utils::io::red("Imports a package to the current working directory.\n");
         std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" list\t") << suffer::utils::io::red("Displays package information.\n");
         std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" uninstall\t") << suffer::utils::io::red("Uninstalls a package.") << "\n";
+        std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" clean\t") << suffer::utils::io::red("Deletes suffer's cache.") << "\n";
+        std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" init\t") << suffer::utils::io::red("Generates the structure for a project") << "\n";
         return;
     }
     
@@ -27,7 +29,7 @@ void suffer::commands::help(std::vector<std::string>& arguments) {
                 std::cout << suffer::utils::io::red("\tInstalls a package to the repository.\n");
                 std::cout << suffer::utils::io::red("\tYou may either install from a github link, or from a local directory.\n\n");
                 std::cout << suffer::utils::io::magenta("\tExample usage:\n\t\t");
-                std::cout << suffer::utils::io::commandString("suffer install ") << suffer::utils::io::cyan("https://github/author/repository") << suffer::utils::io::cyan(" // Installs from github\n\t\t");
+                std::cout << suffer::utils::io::commandString("suffer install ") << suffer::utils::io::green("https://github/author/repository") << suffer::utils::io::cyan(" // Installs from github\n\t\t");
                 std::cout << suffer::utils::io::commandString("suffer install --local ") << suffer::utils::io::cyan("// Installs from a local directory\n\n");
                 std::cout << suffer::utils::io::red("\tNOTE: ") << suffer::utils::io::yellow(" When installing locally, you must install from the root directory of the library you wish to install.") << "\n";
                 break;
@@ -51,8 +53,20 @@ void suffer::commands::help(std::vector<std::string>& arguments) {
                 std::cout << suffer::utils::io::magenta("\tExample usage:\n\t\t");
                 std::cout << suffer::utils::io::commandString("suffer uninstall ") << suffer::utils::io::cyan("libname") << suffer::utils::io::cyan(" // Removes the library \"libname\"") << "\n";
                 break;
+            case CLEAN:
+                std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" clean\n");
+                std::cout << suffer::utils::io::red("\tDelete's suffer's cache.\n\n");
+                std::cout << suffer::utils::io::magenta("\tExample usage:\n\t\t");
+                std::cout << suffer::utils::io::commandString("suffer clean ") << "\n";
+                break;
+            case INIT:
+                std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" init\n");
+                std::cout << suffer::utils::io::red("\tGenerates the structure for a project.\n\n");
+                std::cout << suffer::utils::io::magenta("\tExample usage:\n\t\t");
+                std::cout << suffer::utils::io::commandString("suffer init ") << "\n";
+                break;
             default:
-                std::cerr << suffer::utils::io::error() << " This aint it chief, hit the default case in the help command\n";
+                std::cerr << suffer::utils::io::error() << " I forgot to put this command in help! Oops!\n";
                 exit(EXIT_FAILURE);
                 break;
         }

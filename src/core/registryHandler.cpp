@@ -148,6 +148,37 @@ void suffer::core::RegistryHandler::createPackageJson(suffer::core::Package& new
     std::cout << suffer::utils::io::okay() << " Successfully created " << suffer::utils::io::dataString(pJPath.string()) << "\n";
 }
 
+std::optional<nlohmann::json> suffer::core::RegistryHandler::knownPackage(const std::string& pName) {
+    const std::filesystem::path knownPath = this->REGISTRY_PATH / "known.json";
+    std::optional<nlohmann::json> known;
+    std::ifstream knownFile(knownPath);
+    nlohmann::json knownJson;
+
+    if (!knownFile) {
+        std::cerr << suffer::utils::io::error() << " Failed to open " << suffer::utils::io::dataString(knownPath.string());
+        knownFile.close();
+        exit(EXIT_FAILURE);
+    }
+
+    const std::string fContents = std::string(std::istreambuf_iterator<char>(knownFile), std::istreambuf_iterator<char>());
+
+    try {
+        knownJson = nlohmann::json::parse(fContents);
+    } catch (std::exception& e) {
+        std::cerr << suffer::utils::io::error() << " Invalid json at " << suffer::utils::io::dataString(knownPath.string());
+        exit(EXIT_FAILURE);
+    }
+
+    try {
+        known = knownJson[pName].get<nlohmann::json>();
+        knownJson[pName]["headerOnly"].get<bool>(); // gotta try and access a property or it is null.
+    } catch (std::exception& e) {
+        known = std::nullopt;
+    }
+
+    return known;
+}
+
 suffer::core::RegistryHandler::RegistryHandler() : REGISTRY_PATH(this->getRegistryPath()), LIBS_PATH(this->getRegistryPath() / "libs"), CACHE_PATH(this->getRegistryPath() / "cache") {
     if (!std::filesystem::exists(this->REGISTRY_PATH) || !std::filesystem::exists(this->CACHE_PATH) || !std::filesystem::exists(this->LIBS_PATH)) {
         std::string input;
