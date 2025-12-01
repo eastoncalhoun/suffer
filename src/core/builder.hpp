@@ -17,6 +17,7 @@ namespace suffer::core {
         IH_H_STYLE,
         SI_H_STYLE,
         RT_H_STYLE,
+        NM_H_STYLE,
         UNKNOWN
     };
 
@@ -38,7 +39,7 @@ namespace suffer::core {
         void prevImportDetected();
         
         //finds the compiled .a file inside ~/.suffer/lib - ran after compilation
-        std::filesystem::path findStaticLibLocation();
+        std::vector<std::filesystem::path> findStaticLibLocation();
 
         //copies headers from ~/.suffer/lib
         void importHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath);

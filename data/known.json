@@ -51,5 +51,139 @@
         "package": "SQLiteCpp",
         "source": "https://github.com/SRombauts/SQLiteCpp",
         "version": "unknown"
+    },
+    "cpp-httplib": {
+        "author": "yhirose",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": true,
+        "package": "cpp-httplib",
+        "source": "https://github.com/yhirose/cpp-httplib",
+        "version": "unknown"
+    },
+    "Crow": {
+        "author": "CrowCpp",
+        "dependencies": {
+            "asio": "any"
+        },
+        "flags": "",
+        "headerOnly": true,
+        "package": "Crow",
+        "source": "https://github.com/CrowCpp/Crow",
+        "version": "unknown"
+    },
+    "glfw": {
+        "author": "glfw",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": false,
+        "package": "glfw",
+        "source": "https://github.com/glfw/glfw",
+        "version": "unknown"
+    },
+    "asio": {
+        "author": "chriskohlhoff",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": true,
+        "package": "asio",
+        "source": "https://github.com/chriskohlhoff/asio",
+        "version": "unknown"
+    },
+    "simdjson": {
+        "author": "simdjson",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": false,
+        "package": "simdjson",
+        "source": "https://github.com/simdjson/simdjson",
+        "version": "unknown"
+    },
+    "rapidjson": {
+        "author": "Tencent",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": true,
+        "package": "rapidjson",
+        "source": "https://github.com/Tencent/rapidjson",
+        "version": "unknown"
+    },
+    "tomlplusplus": {
+        "author": "marzer",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": true,
+        "package": "tomlplusplus",
+        "source": "https://github.com/marzer/tomlplusplus",
+        "version": "unknown"
+    },
+    "doctest": {
+        "author": "doctest",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": true,
+        "package": "doctest",
+        "source": "https://github.com/doctest/doctest",
+        "version": "unknown"
+    },
+    "CLI11": {
+        "author": "CLIUtils",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": true,
+        "package": "CLI11",
+        "source": "https://github.com/CLIUtils/CLI11",
+        "version": "unknown"
+    },
+    "soci": {
+        "author": "SOCI",
+        "dependencies": {
+            "sqlite3": "sys"
+        },
+        "flags": "-DSOCI_TESTS=OFF -DSOCI_EMPTY=OFF",
+        "headerOnly": false,
+        "package": "soci",
+        "source": "https://github.com/SOCI/soci",
+        "version": "unknown"
+    }
+,
+    "pqxx": {
+        "author": "jtv",
+        "dependencies": {
+            "pq": "sys"
+        },
+        "flags": "",
+        "headerOnly": false,
+        "package": "libpqxx",
+        "source": "https://github.com/jtv/libpqxx",
+        "version": "unknown"
+    },
+    "SDL": {
+        "author": "libsdl-org",
+        "dependencies": {
+            "X11": "sys",
+            "GL": "sys"
+        },
+        "flags": "",
+        "headerOnly": false,
+        "package": "SDL",
+        "source": "https://github.com/libsdl-org/SDL",
+        "version": "unknown"
+    },
+    "SFML": {
+        "author": "SFML",
+        "dependencies": {
+            "X11": "sys",
+            "GL": "sys",
+            "openal": "sys",
+            "FLAC": "sys",
+            "vorbis": "sys",
+            "freetype": "sys"
+        },
+        "flags": "",
+        "headerOnly": false,
+        "package": "SFML",
+        "source": "https://github.com/SFML/SFML",
+        "version": "unknown"
     }
 }

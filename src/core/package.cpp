@@ -85,13 +85,8 @@ const std::filesystem::path suffer::core::Package::determinePath() {
 }
 
 const std::filesystem::path suffer::core::Package::determineCachePath() {
-    const std::string fileName = "lib" + this->name + ".a";
     const std::string home = getenv("HOME");
-    const std::filesystem::path cachePath = std::filesystem::path(home) / ".suffer" / "cache" / fileName;
-
-    if (!std::filesystem::exists(cachePath)) {
-        std::cout << suffer::utils::io::warning() << " The path " << suffer::utils::io::dataString(cachePath) << " does not exist (package::determineCachePath)\n";
-    }
+    const std::filesystem::path cachePath = std::filesystem::path(home) / ".suffer" / "cache" / this->name;
 
     return cachePath;
 }

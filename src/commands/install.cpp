@@ -51,7 +51,7 @@ void suffer::commands::install(std::vector<std::string>& args) {
 
         std::filesystem::create_directory(tmp);
         std::filesystem::current_path(tmp);
-        std::string command = "git clone " + arg;
+        std::string command = "git clone --recursive " + arg;
 
         //git clone <url>
         if (system(command.c_str()) != 0) {

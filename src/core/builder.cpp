@@ -24,6 +24,8 @@ int suffer::core::Builder::determineHeaderPackaging() {
         type = IH_H_STYLE;
     } else if (this->getHeadersFromRoot().size() > 0) {
         type = RT_H_STYLE;
+    } else if (std::filesystem::exists(pPath / this->package.getName())) {
+        type = NM_H_STYLE;
     }
 
     return type;
@@ -99,10 +101,17 @@ void suffer::core::Builder::importHeaders(const std::filesystem::path& include, 
                 }
             }
 
+            if (!std::filesystem::exists(includeProject / this->package.getName())) {
+                std::filesystem::create_directory(includeProject / this->package.getName());
+            }
+
             for (auto& header : headers) {
                 std::filesystem::copy(header, includeProject, std::filesystem::copy_options::overwrite_existing);
             }
 
+            break;
+        case NM_H_STYLE:
+            std::filesystem::copy(libPath / this->package.getName(), include, std::filesystem::copy_options::overwrite_existing | std::filesystem::copy_options::recursive);
             break;
 
         case UNKNOWN:
@@ -121,20 +130,22 @@ void suffer::core::Builder::importHeaders(const std::filesystem::path& include, 
     std::cout << suffer::utils::io::okay() << " Copied over headers from " << suffer::utils::io::dataString(this->package.getName()) << "\n";
 }
 
-std::filesystem::path suffer::core::Builder::findStaticLibLocation() {
-    const std::string libName = "lib" + this->package.getName() + ".a";
+std::vector<std::filesystem::path> suffer::core::Builder::findStaticLibLocation() {
     const std::filesystem::path libPath = this->package.determinePath();
+    std::vector<std::filesystem::path> archives = {};
 
-    for (auto& entry : std::filesystem::recursive_directory_iterator(libPath)) {
-        std::string entryName = entry.path().filename().string();
-        
-        if (entryName.find(libName) != std::string::npos && entryName.size() == libName.size()) {
-            return entry.path();
+    for (auto& entry : std::filesystem::recursive_directory_iterator(libPath)) {        
+        if (entry.path().extension() == ".a") {
+            archives.push_back(entry.path());
         }
     }
 
-    std::cerr << suffer::utils::io::error() << " No " << suffer::utils::io::dataString(libName) << " found in " << suffer::utils::io::dataString(libPath.string());
-    exit(EXIT_FAILURE);
+    if (archives.size() == 0) {
+        std::cerr << suffer::utils::io::error() << " No compiled .a found in " << suffer::utils::io::dataString(libPath.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    return archives;    
 }
 
 std::vector<std::filesystem::path> suffer::core::Builder::detectBuiltHeaders() {
@@ -220,14 +231,19 @@ void suffer::core::Builder::compileLib() {
         }
     }
 
-    const std::filesystem::path staticLib = this->findStaticLibLocation();
+    const std::vector<std::filesystem::path> staticLibs = this->findStaticLibLocation();
+    const std::filesystem::path cachePath = this->package.determineCachePath();
 
-    if (!std::filesystem::exists(staticLib)) {
-        std::cout << suffer::utils::io::error() << " The supposed library at " << suffer::utils::io::dataString(staticLib.string()) << " does not exist\n";
-        exit(EXIT_FAILURE);
+    if (!std::filesystem::exists(cachePath)) {
+        std::filesystem::create_directory(cachePath);
+    } else if (!std::filesystem::is_directory(cachePath)) {
+        std::filesystem::remove(cachePath);
+        std::filesystem::create_directory(cachePath);
     }
 
-    std::filesystem::copy(staticLib, registry.getCachePath(), std::filesystem::copy_options::overwrite_existing);
+    for (const auto& staticLib : this->findStaticLibLocation()) {
+        std::filesystem::copy(staticLib, cachePath, std::filesystem::copy_options::overwrite_existing);
+    }
 
     std::cout << suffer::utils::io::okay() << " Successfully compiled and cached " << suffer::utils::io::dataString(this->package.getName()) << "\n";
 }
@@ -296,10 +312,22 @@ void suffer::core::Builder::createProjectJson(int index, const std::vector<std::
         projectObj["link"].push_back(nlohmann::json::array());
     }
 
-    projectObj["link"][index].push_back("-l" + this->package.getName());
+    if (std::filesystem::exists(this->package.determineCachePath())) {
+        for (const auto& ar : std::filesystem::directory_iterator(this->package.determineCachePath())) {
+            std::string arName = ar.path().filename().string();
+
+            arName.replace(0, 3, "");
+            arName = arName.substr(0, arName.find(".a"));
+            projectObj["link"][index].push_back("-l" + arName);
+        }
+    }
 
     for (auto& lib : sysLibs) {
         projectObj["link"][index].push_back("-l" + lib);
+    }
+
+    if (projectObj["link"][index].size() == 0) {
+        return;
     }
 
     std::ofstream projectFileOut(jsonPath, std::ios::out | std::ios::trunc);
@@ -360,7 +388,17 @@ std::string suffer::core::Builder::determineProjectGpp(const std::filesystem::pa
     } else {
         //building a dependency
         gppCommand = "cd " + projectPath.string() + " && ";
-        gppCommand = gppCommand + "g++ -c -I ./include $(find ./src -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\")";
+        gppCommand = gppCommand + "g++ -c ";
+
+        const int packaging = this->determineHeaderPackaging();
+
+        if (packaging != RT_H_STYLE) {
+            gppCommand = gppCommand + "-I ./include ";
+        } else {
+            gppCommand = gppCommand + "-I ./";
+        }
+
+        gppCommand = gppCommand + "$(find ./ -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\")";
     }
     
 
@@ -391,10 +429,11 @@ void suffer::core::Builder::import(int index, bool root) {
     const std::filesystem::path curr = std::filesystem::current_path();
     const std::filesystem::path include = curr / "include";
 
-    this->setupProject();
-
     this->checkPermissions(libPath);
     this->checkPermissions(include);
+
+    this->setupProject();
+    this->importHeaders(include, libPath);
 
     if (!std::filesystem::exists(libPath)) {
         std::cerr << suffer::utils::io::error() << " The path " << suffer::utils::io::dataString(libPath.string()) << " does not exist\n";
@@ -433,14 +472,10 @@ void suffer::core::Builder::import(int index, bool root) {
     }
 
     if (!this->package.isHeaderOnly()) {
-        this->createProjectJson(index, sysLibs);
-
         const std::filesystem::path buildPath = std::filesystem::current_path() / "lib";
         const std::string libName = "lib" + this->package.getName() + ".a";
 
         if (!std::filesystem::exists(buildPath)) {
-            std::cout << suffer::utils::io::info() << " No project /lib directory detected\n";
-
             if (!std::filesystem::create_directory(buildPath)) {
                 std::cerr << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(buildPath) << "\n";
                 exit(EXIT_FAILURE);
@@ -449,16 +484,21 @@ void suffer::core::Builder::import(int index, bool root) {
             std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(buildPath.string()) << "\n";
         }
 
-        this->importHeaders(include, libPath);
-
         if (this->isCached()) {
-            std::cout << suffer::utils::io::info() << " Found " << suffer::utils::io::dataString(this->package.determineCachePath().string()) << " using cached version\n"; 
-            
-            std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
+            const std::filesystem::path cachePath = this->package.determineCachePath();
+
+            std::cout << suffer::utils::io::info() << " Cached version " << suffer::utils::io::dataString(this->package.determineCachePath().string()) << " using...\n"; 
+
+            for (const auto& archive : std::filesystem::directory_iterator(this->package.determineCachePath())) {
+                std::filesystem::copy(archive.path(), buildPath, std::filesystem::copy_options::overwrite_existing);
+            }
         } else {
             this->compileLib();
 
-            std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
+            for (const auto& archive : std::filesystem::directory_iterator(this->package.determineCachePath())) {
+                std::filesystem::copy(archive.path(), buildPath, std::filesystem::copy_options::overwrite_existing);
+            }
+
             std::vector<std::filesystem::path> builtHeaders = this->detectBuiltHeaders();
 
             if (builtHeaders.size() > 0) {
@@ -478,6 +518,8 @@ void suffer::core::Builder::import(int index, bool root) {
             }
         }
     }
+
+    this->createProjectJson(index, sysLibs);
 
     for (auto& dep : packages) {
         suffer::core::Builder builder(dep, this->registry);
