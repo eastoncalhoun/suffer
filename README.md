@@ -1,65 +1,154 @@
 # Suffer - C/C++ Package Manager
-A simple, decentralized package manager for C and C++ that actually works.
+
+A simple, decentralized package manager for C++, that is similar to npm.
 
 ## The Problem
-C++ dependency management is a nightmare. CMake is what hell is like, vcpkg is a cry for help, Conan injects Python just to feel something, and manual library management makes one contemplate.. Rust.. Again.. Most developers just copy-paste headers or give up entirely and move to a higher level language.
 
-## The Solution
+C++ dependency management is a nightmare. CMake is turing complete config, vcpkg requires Microsoft's blessing, Conan drags Python into everything, and manual library management makes one consider... Rust.
 
-Suffer makes it... Marginally less painful.
+Most learning developers manually copy-paste headers and pray.
 
 ```bash
-suffer install https://github.com/author/package 
-#OR
-suffer local-install /path/to/package.tar.gz
+# The manual way (what Suffer automates)
 
-suffer import package
-make
+# Clone libraries
+git clone https://github.com/fmtlib/fmt
+git clone https://github.com/gabime/spdlog
+
+# Build fmt
+cd fmt
+cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
+cd ..
+
+# Build spdlog with external fmt
+cd spdlog
+cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release -DSPDLOG_FMT_EXTERNAL=ON
+cmake --build build --config Release
+cd ..
+
+# Set up project
+mkdir -p project/src project/include project/lib project/out
+
+# Copy headers
+cp -r fmt/include/fmt project/include/
+cp -r spdlog/include/spdlog project/include/
+
+# Copy static libs
+cp fmt/build/libfmt.a project/lib/
+cp spdlog/build/libspdlog.a project/lib/
+```
+## The Solution
+
+Suffer makes it marginally less painful.
+
+```bash
+suffer install https://github.com/fmtlib/fmt
+suffer install https://github.com/gabime/spdlog
+suffer import spdlog
 ```
 
-Done. No configuration files to write, no build system integration, no dependency hell. No pain! From dependency management..
+Done. No writing XML, Gradle, Cmake.. Just JSON.
 
 ## Core Philosophy
 
-### Decentralization
-Install from any Git repository, no central registry gods or masters.
+**Decentralized** — Install from any Git repository. No central registry, no corporate overlords.
 
-### Static linking by default
-Dynamic linking is how good friendships come to an end.
-Self-contained binaries that just work, no runtime dependency nightmares.
+**Static by default** — Dynamic linking is how good friendships end. Self-contained binaries just work.
 
-### JSON only
-Zero scripting, zero DSL, zero Lua.. Not Gradle... If you need to configure something, it's simple JSON.
+**JSON only** — Zero scripting, zero DSLs, zero Lua. Configuration is simple JSON or nothing.
 
-### One command workflows
-Suffer's import command handles everything! It builds installed dependencies if they aren't cached, copies headers to ./lib; it even generates basic Makefiles (WOW). 
+**Minimal workflow** — Install, import, make. That's it.
 
-## Key Features:
+## How It Works
 
-- Automatic dependency detection and resolution
-- Build caching to avoid recompiling
-- Project isolation (similar to Python's venv or Node's npm. No system-wide pollution)
-- Automatic Makefile generation
-- Future: AppImage/Flatpak packaging support
+1. `suffer install <github-url>` clones and registers the package
+2. `suffer import <package>` builds it (if needed), copies headers to `./include`, static libs to `./lib`, and updates your project config
+3. `make` compiles your project with the right flags
+
+Suffer tracks dependencies, handles link order, and caches compiled libraries so you only build once.
+
+## Supported Libraries
+
+Suffer ships with configurations for common libraries:
+- <a href="https://github.com/fmtlib/fmt/">fmt</a> | fmtlib
+- <a href="https://github.com/gabime/spdlog">spdlog</a> | gabime 
+- <a href="https://github.com/nlohmann/json/"> json</a> | nlohmann
+- <a href="https://github.com/libcpr/cpr"> cpr</a> | libcpr
+- <a href="https://github.com/SRombauts/SQLiteCpp"> SQLiteCpp</a> | SRombauts
+
+Adding more configurations pre-package install, is just a JSON entry in `~/.suffer/known.json`.
+Post install the configuration file is `~/.suffer/libs/lib/suffer.json`.
+
+## Example Config File (suffer.json for spdlog)
+```js
+{
+    "package": "spdlog",
+    "author": "gabime",
+    "flags": "-DSPDLOG_FMT_EXTERNAL=ON",
+    "source": "https://github.com/gabime/spdlog",
+    "version": "1.16.0",
+    "headerOnly": false,
+    "dependencies": {
+        "fmt": "any"
+    }
+}
+```
 
 ## Installation
 
 ### Requirements
-- Git
-- GCC/Clang with C++17 support
-- GNU Make
+- g++ (C++17)
+- cmake
+- make
+- pkg-config
+- git
+- linux or wsl
 
 ```bash
-git clone https://github.com/eastoncalhoun/suffer/
-
-cd ./suffer
-
+git clone https://github.com/eastoncalhoun/suffer
+cd suffer
 make
-
-sudo make install #🥴 trust me bro
+make install
 ```
+
+## Commands
+```
+suffer help        Show help
+suffer install     Install a package from GitHub
+suffer import      Import a package into the current directory
+suffer list        Show package information
+suffer uninstall   Remove a package
+suffer clean       Clear suffer's build cache
+suffer init        Initialize a new project structure
+```
+
+## Project Structure
+
+Suffer generates:
+```
+your-project/
+├── src/           # Your source files
+├── include/       # Headers (dependencies)
+├── lib/           # Static libraries
+├── out/           # Build output
+├── suffer.project.json    # linking configuration
+└── Makefile       # build/run
+```
+
+## Creating a Suffer Library
+
+Suffer expects:
+```
+your-project/
+├── src/           # Your source files
+├── include/       # Headers (project's, dependencies)
+└── suffer.json    # Dependency configuration
+```
+
 # No more suffering!
-Results may vary
+Results may vary, currently, specific version control is unsupported. I plan to work on that in the future at some point.
 
 ## License
+
 GNU GPL v3

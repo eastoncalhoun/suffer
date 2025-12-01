@@ -164,6 +164,8 @@ std::vector<std::filesystem::path> suffer::core::Builder::detectBuiltHeaders() {
 void suffer::core::Builder::compileLib() {
     const std::filesystem::path libPath = this->package.determinePath();
     const std::filesystem::path include = libPath / "include";
+    const std::string& flags = this->package.getFlags();
+    const std::string& name = this->package.getName(); 
 
     if (!std::filesystem::exists(libPath)) {
         std::cerr << suffer::utils::io::error() << " Library not found at " << suffer::utils::io::dataString(libPath) << "\n";
@@ -171,11 +173,10 @@ void suffer::core::Builder::compileLib() {
     }
 
     if (std::filesystem::exists(libPath / "CMakeLists.txt")) {
-        std::cout << suffer::utils::io::info() << " Detected CMake\n";
+        std::cout << suffer::utils::io::info() << " Detected CMake settings... Attempting to compile\n";
 
-        std::string flags = this->package.getFlags();
-        std::string cmakeGen = "cd " + libPath.string()  + " && cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release " + flags;
-        std::string cmakeBuild = "cd " + libPath.string() + " && cmake --build build --config Release";
+        const std::string cmakeGen = "cd " + libPath.string()  + " && cmake -S . -B build -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release " + flags;
+        const std::string cmakeBuild = "cd " + libPath.string() + " && cmake --build build --config Release";
         
         if (system(cmakeGen.c_str()) != 0) {
             std::cout << suffer::utils::io::error() << " Failed to generate the static CMake build for " << suffer::utils::io::dataString(this->package.getName()) << "\n";
@@ -185,6 +186,37 @@ void suffer::core::Builder::compileLib() {
         if (system(cmakeBuild.c_str()) != 0) {
             std::cout << suffer::utils::io::error() << " CMake failed to compile " << suffer::utils::io::dataString(this->package.getName()) << "\n";
             exit(EXIT_FAILURE);
+        }
+    } else {
+        const std::filesystem::path sufferProj = libPath / "suffer.project.json";
+
+        if (std::filesystem::exists(sufferProj)) {
+            std::cout << suffer::utils::io::info() << " Found " + suffer::utils::io::dataString(sufferProj.string()) + "  attempting to compile...\n";
+        } else {
+            std::cout << suffer::utils::io::info() << " No suffer.project.json found. Praying for header only and structure.." << std::flush;
+            sleep(1);
+            std::cout << " Attempting to compile...\n";
+        }
+
+        //compile
+        if (system(this->determineProjectGpp(libPath).c_str()) != 0) {
+            std::cerr << suffer::utils::io::error() << " Failed to compile " << suffer::utils::io::dataString(name) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+        const std::string arCommand = "cd " + libPath.string() + " && ar rcs lib" + name + ".a *.o";
+        
+        //bundle
+        if (system(arCommand.c_str()) != 0) {
+            std::cout << suffer::utils::io::error() << " Failed to bundle object files for " << suffer::utils::io::dataString(name) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+        //cleanup
+        for (auto& entry : std::filesystem::directory_iterator(libPath)) {
+            if (entry.path().extension().string() == ".o") {
+                std::filesystem::remove(entry.path());
+            }
         }
     }
 
@@ -277,9 +309,9 @@ void suffer::core::Builder::createProjectJson(int index, const std::vector<std::
     projectFileOut.close();
 }
 
-std::string suffer::core::Builder::determineLinkOrder() {
+std::string suffer::core::Builder::determineLinkOrder(const std::filesystem::path& projectPath = std::filesystem::current_path() / "suffer.project.json") {
     std::vector<std::string> links = std::vector<std::string>();
-    std::ifstream projectFile(std::filesystem::current_path() / "suffer.project.json");
+    std::ifstream projectFile(projectPath);
     std::string jString = std::string(std::istreambuf_iterator<char>(projectFile), std::istreambuf_iterator<char>());
 
     projectFile.close();
@@ -315,14 +347,30 @@ std::string suffer::core::Builder::determineLinkOrder() {
     return linkOrder;
 }
 
+std::string suffer::core::Builder::determineProjectGpp(const std::filesystem::path& projectPath = std::filesystem::current_path()) {
+    std::string gppCommand;
+
+    if (projectPath == std::filesystem::current_path()) {
+        //building our own project
+        gppCommand = "g++ -o ./out/program -I ./include $(shell find ./src -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\") ";
+
+        if (std::filesystem::exists(projectPath / "lib")) {
+            gppCommand = gppCommand + "-L ./lib " + this->determineLinkOrder();
+        }
+    } else {
+        //building a dependency
+        gppCommand = "cd " + projectPath.string() + " && ";
+        gppCommand = gppCommand + "g++ -c -I ./include $(find ./src -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\")";
+    }
+    
+
+    return gppCommand;
+}
+
 void suffer::core::Builder::createMakeFile() {
     std::string makeFileText = "";
     makeFileText = makeFileText + "build:\n";
-    makeFileText = makeFileText + "\tg++ -o ./out/program -I ./include $(shell find ./src -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\") ";
-
-    if (std::filesystem::exists(std::filesystem::current_path() / "lib")) {
-        makeFileText = makeFileText + "-L ./lib " + this->determineLinkOrder();
-    }
+    makeFileText = makeFileText + "\t" + this->determineProjectGpp(std::filesystem::current_path());
 
     makeFileText = makeFileText + "\nrun:\n";
     makeFileText = makeFileText + "\t./out/program\n";
@@ -333,8 +381,12 @@ void suffer::core::Builder::createMakeFile() {
 }
 
 void suffer::core::Builder::import(int index, bool root) {
-    std::cout << suffer::utils::io::info() << " Attempting to import " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
-
+    if (root) {
+        std::cout << suffer::utils::io::info() << " Attempting to import " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
+    } else {
+        std::cout << suffer::utils::io::info() << " Attempting to import dependency " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
+    }
+    
     const std::filesystem::path libPath = this->package.determinePath();
     const std::filesystem::path curr = std::filesystem::current_path();
     const std::filesystem::path include = curr / "include";
@@ -348,25 +400,41 @@ void suffer::core::Builder::import(int index, bool root) {
         std::cerr << suffer::utils::io::error() << " The path " << suffer::utils::io::dataString(libPath.string()) << " does not exist\n";
         exit(EXIT_FAILURE);
     }
-    
+
     const std::map<std::string, std::string>& dependencies = this->package.getDependencies();
     std::vector<std::string> sysLibs = {};
-
+    std::vector<suffer::core::Package> packages = {};
+    
     for (auto& keyValue : dependencies) {
         if (keyValue.second != "sys") {
             suffer::core::Package p = registry.findPackage(keyValue.first);
-            suffer::core::Builder builder = suffer::core::Builder(p, this->registry);
-
-            builder.import(index, false);
+            
+            packages.push_back(p);
         } else {
-            std::cout << suffer::utils::io::info() << " System Dependency " << suffer::utils::io::dataString(keyValue.first) << "\n";
+            const std::string& depName = keyValue.first;
+            const std::string pkgConfigCommand = "pkg-config --exists ";
+            const std::string firstTry = pkgConfigCommand + depName;
+            const std::string secondTry = pkgConfigCommand + "lib" + depName;
+            const std::string thirdTry = pkgConfigCommand + depName + "lib";
+            const std::string dataName = suffer::utils::io::dataString(depName);
+            const bool glibc = depName == "pthread" || depName == "m" || depName == "dl" || depName == "rt" || depName == "crypt" || depName == "resolv" || depName == "nsl" || depName == "util";
+
+            if (glibc) {
+                std::cout << suffer::utils::io::okay() << " Detected GlibC dependency " << dataName << "\n";
+            } else if (system(firstTry.c_str()) != 0 && system(secondTry.c_str()) != 0 && system(thirdTry.c_str()) != 0) {
+                std::cout << suffer::utils::io::warning() << " Could not detect system dependency " << dataName << "\n";
+                std::cout << suffer::utils::io::info() << " You should be able to install " << dataName << " from your system's package manager. If it is not installed you will be unable to link against it.\n";
+            }  else {
+                std::cout << suffer::utils::io::okay() << " Detected dependency " << dataName << " on the system\n";
+            }
+
             sysLibs.push_back(keyValue.first);
         }
     }
 
-    this->importHeaders(include, libPath);
-
     if (!this->package.isHeaderOnly()) {
+        this->createProjectJson(index, sysLibs);
+
         const std::filesystem::path buildPath = std::filesystem::current_path() / "lib";
         const std::string libName = "lib" + this->package.getName() + ".a";
 
@@ -383,10 +451,12 @@ void suffer::core::Builder::import(int index, bool root) {
 
         if (this->isCached()) {
             std::cout << suffer::utils::io::info() << " Found " << suffer::utils::io::dataString(this->package.determineCachePath().string()) << " using cached version\n"; 
+            
             std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
         } else {
             this->compileLib();
-            
+
+            std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
             std::vector<std::filesystem::path> builtHeaders = this->detectBuiltHeaders();
 
             if (builtHeaders.size() > 0) {
@@ -401,20 +471,25 @@ void suffer::core::Builder::import(int index, bool root) {
 
                 for (auto& header : builtHeaders) {
                     std::filesystem::copy(header, destiny, std::filesystem::copy_options::overwrite_existing);
-                    std::filesystem::copy(header, include / this->package.getName());
+                    std::filesystem::copy(header, include / this->package.getName(), std::filesystem::copy_options::overwrite_existing);
                 }
-
-                std::filesystem::copy(this->package.determineCachePath(), buildPath, std::filesystem::copy_options::overwrite_existing);
-                this->createProjectJson(index, sysLibs);
             }
         }
     }
 
-    if (root) {
-        this->createMakeFile();
+    this->importHeaders(include, libPath);
+
+    for (auto& dep : packages) {
+        suffer::core::Builder builder(dep, this->registry);
+        builder.import(index, false);
     }
 
-    std::cout << suffer::utils::io::okay() << " Successfully imported " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+    if (root) {
+        this->createMakeFile();
+        std::cout << suffer::utils::io::okay() << " Successfully imported " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+    } else {
+        std::cout << suffer::utils::io::okay() << " Successfully imported dependency " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+    }   
 }
 
 void suffer::core::Builder::setupProject() {

@@ -1,12 +1,11 @@
 {
-    "package": "foo",
-    "version": "version",
-    "author": "author",
-    "source": "local",
-    "headerOnly": false,
+    "author": "gabime",
     "dependencies": {
-        "packageA": "version",
-        "packageB": "version"
+        "fmt": "any"
     },
-    "flags": "-CMAKE -FLAGS"
+    "flags": "-DSPDLOG_FMT_EXTERNAL=ON",
+    "headerOnly": false,
+    "package": "spdlog",
+    "source": "https://github.com/gabime/spdlog",
+    "version": "unknown"
 }

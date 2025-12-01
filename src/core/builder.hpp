@@ -28,7 +28,7 @@ namespace suffer::core {
         //returns an enum type, defaults to UNKNOWN
         int determineHeaderPackaging();
         //returns a string of the order in which to link
-        std::string determineLinkOrder();
+        std::string determineLinkOrder(const std::filesystem::path& projectPath);
         //called if the header structure is determined to be RT_H_STYLE
         std::vector<std::filesystem::path> getHeadersFromRoot();;
         
@@ -50,6 +50,8 @@ namespace suffer::core {
         //checks if lib.a exits
         bool isCached();
 
+        //determines the apropriate compile command for a project
+        std::string determineProjectGpp(const std::filesystem::path& projectPath);
         //dumps json to a file representing dependency order
         void createProjectJson(int index, const std::vector<std::string>& sysLibs);
         //creates a Makefile with the compile command

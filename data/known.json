@@ -40,5 +40,16 @@
         "source": "https://github.com/nlohmann/json",
         "version": "unknown",
         "flags": ""
+    },
+    "SQLiteCpp" : {
+        "author": "SRombauts",
+        "dependencies": {
+            "sqlite3": "sys"
+        },
+        "flags": "",
+        "headerOnly": false,
+        "package": "SQLiteCpp",
+        "source": "https://github.com/SRombauts/SQLiteCpp",
+        "version": "unknown"
     }
 }
