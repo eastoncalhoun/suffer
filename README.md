@@ -146,8 +146,8 @@ your-project/
 └── suffer.json    # Dependency configuration
 ```
 
-# No more suffering!
-Results may vary. Currently, specific version control is unsupported. I plan to work on that in the future at some point.
+# No more suffering with dependencies!
+Results may vary. Currently, specific version control is unsupported. I plan to work on that in the future at some point. I have also not tested it with boost at all. Plan to get more libraries working with it first.
 
 ## License
 
