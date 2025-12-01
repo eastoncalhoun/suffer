@@ -1,4 +1,5 @@
 build:
+	mkdir -p ./out
 	g++ -O2 -o ./out/suffer -I ./include $(shell find ./src -name "*.cpp")
 
 run:
