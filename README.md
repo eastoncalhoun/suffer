@@ -147,7 +147,7 @@ your-project/
 ```
 
 # No more suffering!
-Results may vary, currently, specific version control is unsupported. I plan to work on that in the future at some point.
+Results may vary. Currently, specific version control is unsupported. I plan to work on that in the future at some point.
 
 ## License
 
