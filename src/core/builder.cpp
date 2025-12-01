@@ -449,6 +449,8 @@ void suffer::core::Builder::import(int index, bool root) {
             std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(buildPath.string()) << "\n";
         }
 
+        this->importHeaders(include, libPath);
+
         if (this->isCached()) {
             std::cout << suffer::utils::io::info() << " Found " << suffer::utils::io::dataString(this->package.determineCachePath().string()) << " using cached version\n"; 
             
@@ -476,8 +478,6 @@ void suffer::core::Builder::import(int index, bool root) {
             }
         }
     }
-
-    this->importHeaders(include, libPath);
 
     for (auto& dep : packages) {
         suffer::core::Builder builder(dep, this->registry);
