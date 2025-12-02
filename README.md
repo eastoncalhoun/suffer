@@ -133,6 +133,7 @@ suffer list        Show package information
 suffer uninstall   Remove a package
 suffer clean       Clear suffer's build cache
 suffer init        Initialize a new project structure
+suffer regen       Regenerates a project's Makefile
 ```
 
 ## Project Structure
