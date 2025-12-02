@@ -48,6 +48,8 @@ suffer install https://github.com/gabime/spdlog
 suffer import spdlog
 ```
 
+[![]](https://youtu.be/MSdjSqQtVVw)
+
 Done. No writing XML, Gradle, Cmake.. Just JSON.
 
 ## Core Philosophy
