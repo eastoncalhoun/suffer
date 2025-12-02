@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 
-enum {
+enum SUFFER_SWITCHED {
     HELP,
     INSTALL,
     IMPORT,

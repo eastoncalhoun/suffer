@@ -1,6 +1,6 @@
 #include "./package.hpp"
 
-suffer::core::Package::Package(const std::string& name, const std::string& version, const std::string& author, const std::string& source, const bool headerOnly, const std::string& flags, const std::map<std::string, std::string>& dependencies) {
+suffer::core::Package::Package(const std::string& name, const std::string& version, const std::string& author, const std::string& source, const bool headerOnly, const std::string& flags, const std::unordered_map<std::string, std::string>& dependencies) {
     this->name = name;
     this->version = version;
     this->author = author;
@@ -30,7 +30,7 @@ const std::string& suffer::core::Package::getFlags() {
     return this->flags;
 }
 
-const std::map<std::string, std::string>& suffer::core::Package::getDependencies() {
+const std::unordered_map<std::string, std::string>& suffer::core::Package::getDependencies() {
     return this->dependencies;
 }
 
@@ -47,7 +47,7 @@ const bool suffer::core::Package::isNull() {
 const std::string suffer::core::Package::toJsonText() {
     std::vector<std::string> keys = {};
 
-    for (std::map<std::string, std::string>::iterator element = this->dependencies.begin(); element != this->dependencies.end(); element++) {
+    for (std::unordered_map<std::string, std::string>::iterator element = this->dependencies.begin(); element != this->dependencies.end(); element++) {
         keys.push_back(element->first);
     }
     
@@ -70,7 +70,7 @@ const std::string suffer::core::Package::toJsonText() {
 }
 
 suffer::core::Package suffer::core::Package::nullPackage() {
-    return suffer::core::Package("null", "null", "null", "null", false, "null", std::map<std::string, std::string>());
+    return suffer::core::Package("null", "null", "null", "null", false, "null", std::unordered_map<std::string, std::string>());
 }
 
 const std::filesystem::path suffer::core::Package::determinePath() {
@@ -105,7 +105,7 @@ suffer::core::Package suffer::core::Package::pathFactory(std::filesystem::path p
 
     nlohmann::json pJson = nlohmann::json(); 
     std::string pName;
-    std::map<std::string, std::string> deps;
+    std::unordered_map<std::string, std::string> deps;
 
     try {
         pJson = nlohmann::json::parse(fData);
@@ -115,9 +115,9 @@ suffer::core::Package suffer::core::Package::pathFactory(std::filesystem::path p
     }
 
     try {
-        deps = pJson["dependencies"].get<std::map<std::string, std::string>>();
+        deps = pJson["dependencies"].get<std::unordered_map<std::string, std::string>>();
     } catch (std::exception& e) {
-        deps = std::map<std::string, std::string>();
+        deps = std::unordered_map<std::string, std::string>();
     }
 
     try {

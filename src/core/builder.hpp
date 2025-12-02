@@ -3,7 +3,7 @@
 #include <iostream>
 #include <filesystem>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "../../include/nlohmann/json.hpp"
@@ -54,7 +54,7 @@ namespace suffer::core {
         //determines the apropriate compile command for a project
         std::string determineProjectGpp(const std::filesystem::path& projectPath);
         //dumps json to a file representing dependency order
-        void createProjectJson(int index, const std::vector<std::string>& sysLibs);
+        void createProjectJson(const int index, const std::vector<std::string>& sysLibs);
         //creates a Makefile with the compile command
         void createMakeFile();
 
@@ -64,7 +64,7 @@ namespace suffer::core {
         //returns the index which -lLIB needs to be added in suffer.project.json
         int determineLinkingIndex();
         //execute method
-        void import(int index, bool root = true);
+        void import(const int index, const bool root = true);
         //sets up a new suffer project
         void setupProject();
     };

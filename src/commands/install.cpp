@@ -9,9 +9,15 @@ void suffer::commands::install(std::vector<std::string>& args) {
     const bool local = args[0] == "--local";
     suffer::core::RegistryHandler registryHandler = suffer::core::RegistryHandler();
     const std::filesystem::path start = std::filesystem::current_path();
-    std::map<std::string, std::string> dependencies = std::map<std::string, std::string>();
+    std::unordered_map<std::string, std::string> dependencies = std::unordered_map<std::string, std::string>();
+    std::optional<nlohmann::json> known = registryHandler.knownPackage(args[0]); 
     bool headerOnly = true;
     std::string input, dualieInput, version, author, name, source, flags;
+
+    if (known != std::nullopt) {
+        nlohmann::json knownJ = known.value();
+        args[0] = knownJ["source"].get<std::string>();
+    }
 
     if (local) {
         std::cout << suffer::utils::io::info() << " You must be in the root directory of your new package, and that directory should be whatever the name of your package is.\n" << suffer::utils::io::red("Are these conditions met? ") << suffer::utils::io::noYes();
@@ -90,7 +96,7 @@ void suffer::commands::install(std::vector<std::string>& args) {
         }
     }
 
-    std::optional<nlohmann::json> known = registryHandler.knownPackage(name);
+    known = registryHandler.knownPackage(name);
 
     if (known != std::nullopt) {
         std::cout << suffer::utils::io::info() << " Known package detected\n";
@@ -104,7 +110,7 @@ void suffer::commands::install(std::vector<std::string>& args) {
         headerOnly = knownJ["headerOnly"].get<bool>();
         
         try {
-            dependencies = knownJ["dependencies"].get<std::map<std::string, std::string>>();
+            dependencies = knownJ["dependencies"].get<std::unordered_map<std::string, std::string>>();
         } catch (std::exception& e) {} // dependencies is null
     } else {
         std::cout << suffer::utils::io::info() << " Would you like to generate a blank " << suffer::utils::io::dataString(registryHandler.getLibsPath() / name / "suffer.json") << suffer::utils::io::yesNo();

@@ -298,7 +298,7 @@ int suffer::core::Builder::determineLinkingIndex() {
     return jsonObj["link"].size();
 }
 
-void suffer::core::Builder::createProjectJson(int index, const std::vector<std::string>& sysLibs) {
+void suffer::core::Builder::createProjectJson(const int index, const std::vector<std::string>& sysLibs) {
     const std::filesystem::path jsonPath = std::filesystem::current_path() / "suffer.project.json";
 
     //upon running it will already have been proven valid file and json via determineLinkingIndex
@@ -406,19 +406,21 @@ std::string suffer::core::Builder::determineProjectGpp(const std::filesystem::pa
 }
 
 void suffer::core::Builder::createMakeFile() {
-    std::string makeFileText = "";
-    makeFileText = makeFileText + "build:\n";
-    makeFileText = makeFileText + "\t" + this->determineProjectGpp(std::filesystem::current_path());
+    const std::filesystem::path curr = std::filesystem::current_path();
+    std::string makeFileText = "build:\n";
+
+    makeFileText = makeFileText + "\t" + this->determineProjectGpp(curr);
 
     makeFileText = makeFileText + "\nrun:\n";
     makeFileText = makeFileText + "\t./out/program\n";
 
-    std::ofstream makeFile(std::filesystem::current_path() / "Makefile", std::ios::trunc);
+    std::ofstream makeFile(curr / "Makefile", std::ios::trunc);
+
     makeFile << makeFileText;
     makeFile.close();
 }
 
-void suffer::core::Builder::import(int index, bool root) {
+void suffer::core::Builder::import(const int index, const bool root) {
     if (root) {
         std::cout << suffer::utils::io::info() << " Attempting to import " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
     } else {
@@ -431,7 +433,6 @@ void suffer::core::Builder::import(int index, bool root) {
 
     this->checkPermissions(libPath);
     this->checkPermissions(include);
-
     this->setupProject();
     this->importHeaders(include, libPath);
 
@@ -440,17 +441,17 @@ void suffer::core::Builder::import(int index, bool root) {
         exit(EXIT_FAILURE);
     }
 
-    const std::map<std::string, std::string>& dependencies = this->package.getDependencies();
+    const std::unordered_map<std::string, std::string>& dependencies = this->package.getDependencies();
     std::vector<std::string> sysLibs = {};
     std::vector<suffer::core::Package> packages = {};
     
-    for (auto& keyValue : dependencies) {
+    for (const auto& keyValue : dependencies) {
         if (keyValue.second != "sys") {
             suffer::core::Package p = registry.findPackage(keyValue.first);
             
             packages.push_back(p);
         } else {
-            const std::string& depName = keyValue.first;
+            const std::string depName = keyValue.first;
             const std::string pkgConfigCommand = "pkg-config --exists ";
             const std::string firstTry = pkgConfigCommand + depName;
             const std::string secondTry = pkgConfigCommand + "lib" + depName;
@@ -485,8 +486,6 @@ void suffer::core::Builder::import(int index, bool root) {
         }
 
         if (this->isCached()) {
-            const std::filesystem::path cachePath = this->package.determineCachePath();
-
             std::cout << suffer::utils::io::info() << " Cached version " << suffer::utils::io::dataString(this->package.determineCachePath().string()) << " using...\n"; 
 
             for (const auto& archive : std::filesystem::directory_iterator(this->package.determineCachePath())) {
@@ -504,14 +503,14 @@ void suffer::core::Builder::import(int index, bool root) {
             if (builtHeaders.size() > 0) {
                 std::filesystem::path destiny = libPath / "include";
                 
-                for (auto& element : std::filesystem::directory_iterator(destiny)) {
+                for (const auto& element : std::filesystem::directory_iterator(destiny)) {
                     if (element.is_directory()) {
                         destiny = element.path();
                         break;
                     }
                 }
 
-                for (auto& header : builtHeaders) {
+                for (const auto& header : builtHeaders) {
                     std::filesystem::copy(header, destiny, std::filesystem::copy_options::overwrite_existing);
                     std::filesystem::copy(header, include / this->package.getName(), std::filesystem::copy_options::overwrite_existing);
                 }

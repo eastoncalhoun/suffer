@@ -170,8 +170,8 @@ std::optional<nlohmann::json> suffer::core::RegistryHandler::knownPackage(const 
     }
 
     try {
-        known = knownJson[pName].get<nlohmann::json>();
         knownJson[pName]["headerOnly"].get<bool>(); // gotta try and access a property or it is null.
+        known = knownJson[pName].get<nlohmann::json>();
     } catch (std::exception& e) {
         known = std::nullopt;
     }
