@@ -48,7 +48,7 @@ suffer install https://github.com/gabime/spdlog
 suffer import spdlog
 ```
 
-[![Video]](https://youtu.be/MSdjSqQtVVw)
+[![Video](https://img.youtube.com/vi/MSdjSqQtVVw/0.jpg)](https://youtu.be/MSdjSqQtVVw)
 
 Done. No writing XML, Gradle, Cmake.. Just JSON.
 
