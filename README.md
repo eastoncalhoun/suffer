@@ -71,21 +71,23 @@ Suffer tracks dependencies, handles link order, and caches compiled libraries so
 ## Supported Libraries
 
 Suffer ships with configurations for common libraries:
-- <a href="https://github.com/fmtlib/fmt/">fmt</a> - fmtlib
-- <a href="https://github.com/gabime/spdlog">spdlog</a> - gabime 
 - <a href="https://github.com/nlohmann/json/">json</a> - nlohmann
-- <a href="https://github.com/libcpr/cpr">cpr</a> - libcpr
-- <a href="https://github.com/SRombauts/SQLiteCpp">SQLiteCpp</a> - SRombauts
-- <a href="https://github.com/yhirose/cpp-httplib">cpp-httplib</a> - yhirose
-- <a href="https://github.com/CrowCpp/Crow">Crow </a> - CrowCpp
+- <a href="https://github.com/fmtlib/fmt/">fmt</a> - fmtlib
+- <a href="https://github.com/gabime/spdlog">spdlog</a> - gabime
+- <a href="https://github.com/raysan5/raylib">raylib</a> - raysan5
 - <a href="https://github.com/glfw/glfw">glfw</a> - glfw
-- <a href="https://github.com/simdjson/simdjson">simdjson</a> - simdjson
 - <a href="https://github.com/Tencent/rapidjson">rapidjson</a> - Tencent
-- <a href="https://github.com/marzer/tomlplusplus">toml++</a> - marzer
+- <a href="https://github.com/simdjson/simdjson">simdjson</a> - simdjson
+- <a href="https://github.com/libcpr/cpr">cpr</a> - libcpr
 - <a href="https://github.com/doctest/doctest">doctest</a> - doctest
 - <a href="https://github.com/CLIUtils/CLI11">CLI11</a> - CLIUtils
+- <a href="https://github.com/CrowCpp/Crow">Crow</a> - CrowCpp
+- <a href="https://github.com/yhirose/cpp-httplib">cpp-httplib</a> - yhirose
+- <a href="https://github.com/marzer/tomlplusplus">toml++</a> - marzer
+- <a href="https://github.com/SRombauts/SQLiteCpp">SQLiteCpp</a> - SRombauts
 - <a href="https://github.com/SOCI/soci">soci</a> - SOCI
 - <a href="https://github.com/jtv/libpqxx">pqxx</a> - jtv
+- <a href="https://github.com/catchorg/Catch2">Catch2</a> - catchorg
 
 Adding more configurations pre-package install, is just a JSON entry in `~/.suffer/known.json`.
 Post install the configuration file is `~/.suffer/libs/lib/suffer.json`.

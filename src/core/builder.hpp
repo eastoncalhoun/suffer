@@ -55,6 +55,8 @@ namespace suffer::core {
         std::string determineProjectGpp(const std::filesystem::path& projectPath);
         //dumps json to a file representing dependency order
         void createProjectJson(const int index, const std::vector<std::string>& sysLibs);
+        std::filesystem::path determineUnknownHeaderRoot(const std::filesystem::path& libPath);
+        void importUnknownHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath);
 
     public:
         Builder(suffer::core::Package& package, suffer::core::RegistryHandler& registry);

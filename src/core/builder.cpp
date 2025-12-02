@@ -63,17 +63,52 @@ void suffer::core::Builder::prevImportDetected() {
     }
 }
 
+void suffer::core::Builder::importUnknownHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath) {
+    bool foundHeaders = false; // may not be touched
+    if (!std::filesystem::exists(include)) {
+        std::filesystem::create_directory(include);
+    }
+
+    if (!std::filesystem::exists(libPath) || !std::filesystem::is_directory(libPath)) {
+        std::cerr << suffer::utils::io::error() << " No directory found at " << suffer::utils::io::dataString(libPath.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    int headers = 0;
+
+    for (const auto& element : std::filesystem::directory_iterator(libPath)) {
+        if (element.is_directory()) {
+            this->importUnknownHeaders(include / element.path().filename().string(), element.path());
+        }
+
+        const std::string ext = element.path().extension().string();
+        
+        if (ext == ".h" || ext == ".hh" || ext == ".hpp" || ext == ".H") {
+            std::filesystem::copy(element.path(), include, std::filesystem::copy_options::overwrite_existing);
+            
+            headers++;
+            
+            if (!foundHeaders) {
+                foundHeaders = true;
+            }
+        }
+    }
+
+    if (!foundHeaders) {
+        std::cout << suffer::utils::io::info() << " No headers found in " << suffer::utils::io::dataString(libPath.string()) << "\n";
+    } else {
+        std::cout << suffer::utils::io::info() << " Copied " << headers << " headers from " << suffer::utils::io::dataString(libPath.string()) << "\n";
+    }
+}
+
 void suffer::core::Builder::importHeaders(const std::filesystem::path& include, const std::filesystem::path& libPath) {
-    //only used if RTH_H_STYLE
-    const std::filesystem::path includeProject = include / this->package.getName();
-    //only used if SI_H_HEADER_STYLE
-    const std::filesystem::path sInclude = libPath / "single_include";
+    const std::filesystem::path includeProject = include / this->package.getName(); //only used if RTH_H_STYLE
+    const std::filesystem::path sInclude = libPath / "single_include"; //only used if SI_H_HEADER_STYLE
     const int packaging = this->determineHeaderPackaging();
 
     auto headers = std::vector<std::filesystem::path>();
     bool prevAcknowledged = false;
 
-    //if the /project/includes dir contains some of the registry's headers already, prompt user for re import.  
     std::vector<std::filesystem::path> libIncludePaths = std::vector<std::filesystem::path>();
     
     switch (packaging) {
@@ -115,8 +150,9 @@ void suffer::core::Builder::importHeaders(const std::filesystem::path& include, 
             break;
 
         case UNKNOWN:
-            std::cerr << suffer::utils::io::error() << " Unknown header structure for " << suffer::utils::io::dataString(this->package.getName()) << "\n";
-            exit(EXIT_FAILURE);
+            std::cout << suffer::utils::io::warning() << " Unknown header structure for " << suffer::utils::io::dataString(this->package.getName()) << "\n";
+            std::cout << suffer::utils::io::info() << " Copying headers in src recursively\n";
+            this->importUnknownHeaders(include, libPath / "src");
 
             break;
 
@@ -420,6 +456,42 @@ void suffer::core::Builder::createMakeFile() {
     makeFile.close();
 }
 
+std::filesystem::path suffer::core::Builder::determineUnknownHeaderRoot(const std::filesystem::path& libPath) {
+    bool rootPath = false;
+    std::vector<std::filesystem::path> dirs = {};
+
+    if (!std::filesystem::exists(libPath)) {
+        std::cerr << suffer::utils::io::error() << " The path " << suffer::utils::io::dataString(libPath.string()) << " does not exist\n";
+        exit(EXIT_FAILURE); 
+    }
+
+    for (const auto& element : std::filesystem::directory_iterator(libPath)) {
+        if (element.path().has_extension()) {
+            const std::string ext = element.path().extension().string();
+            
+            if (ext == ".h" || ext == ".hpp" || ext == ".hh" || ext == ".hxx" || ext == ".H") {
+                rootPath = true;
+                break;
+            }
+        }
+
+        if (element.is_directory()) {
+            dirs.push_back(element.path());
+        }
+    }
+
+    if (!rootPath) {
+        for (const auto& dir : dirs) {
+            return this->determineUnknownHeaderRoot(dir);
+        }
+    } else {
+        return libPath;
+    }
+
+    std::cerr << suffer::utils::io::error() << " Failed to find the root\n";
+    exit(EXIT_FAILURE);
+}
+
 void suffer::core::Builder::import(const int index, const bool root) {
     if (root) {
         std::cout << suffer::utils::io::info() << " Attempting to import " << suffer::utils::io::dataString(this->package.getName()) << " to " << suffer::utils::io::dataString(std::filesystem::current_path().string()) << "\n";
@@ -451,16 +523,19 @@ void suffer::core::Builder::import(const int index, const bool root) {
             
             packages.push_back(p);
         } else {
-            const std::string depName = keyValue.first;
+            std::string depName = keyValue.first;
+            std::transform(depName.begin(), depName.end(), depName.begin(), ::tolower);
+
             const std::string pkgConfigCommand = "pkg-config --exists ";
             const std::string firstTry = pkgConfigCommand + depName;
             const std::string secondTry = pkgConfigCommand + "lib" + depName;
             const std::string thirdTry = pkgConfigCommand + depName + "lib";
             const std::string dataName = suffer::utils::io::dataString(depName);
             const bool glibc = depName == "pthread" || depName == "m" || depName == "dl" || depName == "rt" || depName == "crypt" || depName == "resolv" || depName == "nsl" || depName == "util";
+            
 
             if (glibc) {
-                std::cout << suffer::utils::io::okay() << " Detected GlibC dependency " << dataName << "\n";
+                std::cout << suffer::utils::io::okay() << " Detected libC dependency " << dataName << "\n";
             } else if (system(firstTry.c_str()) != 0 && system(secondTry.c_str()) != 0 && system(thirdTry.c_str()) != 0) {
                 std::cout << suffer::utils::io::warning() << " Could not detect system dependency " << dataName << "\n";
                 std::cout << suffer::utils::io::info() << " You should be able to install " << dataName << " from your system's package manager. If it is not installed you will be unable to link against it.\n";
@@ -492,6 +567,7 @@ void suffer::core::Builder::import(const int index, const bool root) {
                 std::filesystem::copy(archive.path(), buildPath, std::filesystem::copy_options::overwrite_existing);
             }
         } else {
+            const int PACKAGING = this->determineHeaderPackaging();
             this->compileLib();
 
             for (const auto& archive : std::filesystem::directory_iterator(this->package.determineCachePath())) {
@@ -503,16 +579,31 @@ void suffer::core::Builder::import(const int index, const bool root) {
             if (builtHeaders.size() > 0) {
                 std::filesystem::path destiny = libPath / "include";
                 
-                for (const auto& element : std::filesystem::directory_iterator(destiny)) {
-                    if (element.is_directory()) {
-                        destiny = element.path();
-                        break;
+                if (std::filesystem::exists(destiny)) {
+                    for (const auto& element : std::filesystem::directory_iterator(destiny)) {
+                        if (element.is_directory()) {
+                            destiny = element.path();
+                            break;
+                        }
                     }
                 }
 
+                if (PACKAGING == UNKNOWN) {
+                    std::filesystem::path lP = libPath / "src";
+                    destiny = this->determineUnknownHeaderRoot(lP);
+                }
+
                 for (const auto& header : builtHeaders) {
-                    std::filesystem::copy(header, destiny, std::filesystem::copy_options::overwrite_existing);
-                    std::filesystem::copy(header, include / this->package.getName(), std::filesystem::copy_options::overwrite_existing);
+                    if (std::filesystem::exists(destiny)) {
+                        std::filesystem::copy(header, destiny, std::filesystem::copy_options::overwrite_existing);
+                    }
+                    
+                    if (this->determineHeaderPackaging() != UNKNOWN) {
+                        std::filesystem::copy(header, include / this->package.getName(), std::filesystem::copy_options::overwrite_existing);
+                    } else {
+                        std::filesystem::copy(header, include / destiny.filename().string(), std::filesystem::copy_options::overwrite_existing);
+                        std::filesystem::remove(header);
+                    }
                 }
             }
         }

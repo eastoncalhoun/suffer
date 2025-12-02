@@ -158,32 +158,28 @@
         "source": "https://github.com/jtv/libpqxx",
         "version": "unknown"
     },
-    "SDL": {
-        "author": "libsdl-org",
+    "raylib": {
+        "author": "raysan5",
         "dependencies": {
+            "GL": "sys",
             "X11": "sys",
-            "GL": "sys"
+            "pthread": "sys",
+            "dl": "sys",
+            "m": "sys"
         },
-        "flags": "",
+        "flags": "-DBUILD_EXAMPLES=OFF -DBUILD_GAMES=OFF",
         "headerOnly": false,
-        "package": "SDL",
-        "source": "https://github.com/libsdl-org/SDL",
+        "package": "raylib",
+        "source": "https://github.com/raysan5/raylib",
         "version": "unknown"
     },
-    "SFML": {
-        "author": "SFML",
-        "dependencies": {
-            "X11": "sys",
-            "GL": "sys",
-            "openal": "sys",
-            "FLAC": "sys",
-            "vorbis": "sys",
-            "freetype": "sys"
-        },
-        "flags": "",
+    "Catch2": {
+        "author": "catchorg",
+        "dependencies": null,
+        "flags": "-DCATCH_BUILD_TESTING=OFF -DCATCH_INSTALL_DOCS=OFF",
         "headerOnly": false,
-        "package": "SFML",
-        "source": "https://github.com/SFML/SFML",
+        "package": "Catch2",
+        "source": "https://github.com/catchorg/Catch2",
         "version": "unknown"
     }
 }
