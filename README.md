@@ -48,9 +48,6 @@ suffer install https://github.com/gabime/spdlog
 suffer import spdlog
 ```
 
-### Example
-[![Video](https://img.youtube.com/vi/VIDEO_ID/0.jpg)](https://youtu.be/MSdjSqQtVVw)
-
 Done. No writing XML, Gradle, Cmake.. Just JSON.
 
 ## Core Philosophy
@@ -68,6 +65,9 @@ Done. No writing XML, Gradle, Cmake.. Just JSON.
 1. `suffer install <github-url OR known package OR --local>` Registers the package
 2. `suffer import <package>` builds it (if needed), copies headers to `./include`, static libs to `./lib`, and updates your project config
 3. `make` compiles your project with the right flags
+
+### Example
+[![Video](https://img.youtube.com/vi/MSdjSqQtVVw/0.jpg)](https://youtu.be/MSdjSqQtVVw)
 
 Suffer tracks dependencies, handles link order, and caches compiled libraries so you only build once.
 
