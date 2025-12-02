@@ -62,7 +62,7 @@ Done. No writing XML, Gradle, Cmake.. Just JSON.
 
 ## How It Works
 
-1. `suffer install <github-url>` clones and registers the package
+1. `suffer install <github-url OR known package OR --local>` Registers the package
 2. `suffer import <package>` builds it (if needed), copies headers to `./include`, static libs to `./lib`, and updates your project config
 3. `make` compiles your project with the right flags
 
@@ -152,7 +152,7 @@ Suffer expects:
 ```
 your-project/
 ├── src/           # Your source files
-├── include/       # Headers (project's, dependencies)
+├── include/       # Headers (project's)
 └── suffer.json    # Dependency configuration
 ```
 

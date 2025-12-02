@@ -41,6 +41,9 @@ void suffer::commands::Router::route() {
         case INIT:
             suffer::commands::init();
             break;
+        case REGEN:
+            suffer::commands::regen();
+            break;
         default:
             std::cout << suffer::utils::io::error() << " Command not found\n";
             break;

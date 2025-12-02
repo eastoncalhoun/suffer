@@ -10,7 +10,8 @@ enum SUFFER_SWITCHED {
     LIST,
     UNINSTALL,
     CLEAN,
-    INIT
+    INIT,
+    REGEN
 };
 
 inline std::unordered_map<std::string, int> SWITCHED = {
@@ -20,7 +21,8 @@ inline std::unordered_map<std::string, int> SWITCHED = {
     {"list", LIST},
     {"uninstall", UNINSTALL},
     {"clean", CLEAN},
-    {"init", INIT}
+    {"init", INIT},
+    {"regen", REGEN}
 };
 
 //track known flags somehow

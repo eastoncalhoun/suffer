@@ -55,8 +55,6 @@ namespace suffer::core {
         std::string determineProjectGpp(const std::filesystem::path& projectPath);
         //dumps json to a file representing dependency order
         void createProjectJson(const int index, const std::vector<std::string>& sysLibs);
-        //creates a Makefile with the compile command
-        void createMakeFile();
 
     public:
         Builder(suffer::core::Package& package, suffer::core::RegistryHandler& registry);
@@ -67,5 +65,7 @@ namespace suffer::core {
         void import(const int index, const bool root = true);
         //sets up a new suffer project
         void setupProject();
+        //creates a Makefile with the compile command
+        void createMakeFile();
     };
 }

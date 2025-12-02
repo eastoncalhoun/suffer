@@ -12,6 +12,7 @@ void suffer::commands::help(std::vector<std::string>& arguments) {
         std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" uninstall\t") << suffer::utils::io::red("Uninstalls a package.") << "\n";
         std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" clean\t") << suffer::utils::io::red("Deletes suffer's cache.") << "\n";
         std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" init\t") << suffer::utils::io::red("Generates the structure for a project") << "\n";
+        std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" regen\t") << suffer::utils::io::red("Regenerates the Makefile for a project") << "\n";
         return;
     }
     
@@ -64,6 +65,12 @@ void suffer::commands::help(std::vector<std::string>& arguments) {
                 std::cout << suffer::utils::io::red("\tGenerates the structure for a project.\n\n");
                 std::cout << suffer::utils::io::magenta("\tExample usage:\n\t\t");
                 std::cout << suffer::utils::io::commandString("suffer init ") << "\n";
+                break;
+            case REGEN:
+                std::cout << suffer::utils::io::cInfo() << suffer::utils::io::cyan(" regen\n");
+                std::cout << suffer::utils::io::red("\tRegenerates the Makefile for a project\n\n");
+                std::cout << suffer::utils::io::magenta("\tExample usage:\n\t\t");
+                std::cout << suffer::utils::io::commandString("suffer regen ") << "\n";
                 break;
             default:
                 std::cerr << suffer::utils::io::error() << " I forgot to put this command in help! Oops!\n";
