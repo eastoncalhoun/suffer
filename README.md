@@ -48,7 +48,7 @@ suffer install https://github.com/gabime/spdlog
 suffer import spdlog
 ```
 
-[![Video](https://img.youtube.com/vi/MSdjSqQtVVw/0.jpg)](https://youtu.be/MSdjSqQtVVw)
+<iframe width="560" height="315" src="https://www.youtube.com/embed/MSdjSqQtVVw?si=TBBbb_VMYu_MZJGZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 Done. No writing XML, Gradle, Cmake.. Just JSON.
 
