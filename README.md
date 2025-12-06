@@ -43,8 +43,7 @@ cp spdlog/build/libspdlog.a project/lib/
 Suffer makes it marginally less painful.
 
 ```bash
-suffer install https://github.com/fmtlib/fmt
-suffer install https://github.com/gabime/spdlog
+suffer install spdlog
 suffer import spdlog
 ```
 
@@ -83,6 +82,7 @@ Suffer ships with configurations for common libraries:
 - <a href="https://github.com/Tencent/rapidjson">rapidjson</a> - Tencent
 - <a href="https://github.com/simdjson/simdjson">simdjson</a> - simdjson
 - <a href="https://github.com/libcpr/cpr">cpr</a> - libcpr
+- <a href="https://github.com/pantor/inja">inja</a> - pantor
 - <a href="https://github.com/doctest/doctest">doctest</a> - doctest
 - <a href="https://github.com/CLIUtils/CLI11">CLI11</a> - CLIUtils
 - <a href="https://github.com/CrowCpp/Crow">Crow</a> - CrowCpp
@@ -168,3 +168,6 @@ Results may vary. Currently, specific version control is unsupported. I plan to 
 ## License
 
 GNU GPL v3
+
+## Example Project
+<a href="https://github.com/eastoncalhoun/budget">Minimal Server Rendered Webpage</a>

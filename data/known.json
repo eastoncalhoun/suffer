@@ -181,5 +181,32 @@
         "package": "Catch2",
         "source": "https://github.com/catchorg/Catch2",
         "version": "unknown"
+    },
+    "nana": {
+        "author": "cnjinhao",
+        "dependencies": {
+            "X11": "sys",
+            "Xft": "sys",
+            "Xcursor": "sys",
+            "pthread": "sys",
+            "png": "sys",
+            "fontconfig": "sys"
+        },
+        "flags": "-DNANA_ENABLE_PNG=ON -DNANA_LIBPNG=ON",
+        "headerOnly": false,
+        "package": "nana",
+        "source": "https://github.com/cnjinhao/nana",
+        "version": "unknown"
+    },
+    "inja": {
+        "author": "pantor",
+        "dependencies": {
+            "json": "any"
+        },
+        "flags": "",
+        "headerOnly": true,
+        "package": "inja",
+        "source": "https://github.com/pantor/inja",
+        "version": "unknown"
     }
 }
