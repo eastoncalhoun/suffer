@@ -1,4 +1,4 @@
-# Suffer - C/C++ Package Manager
+# Suffer - Suffering free C++ Package Manager
 
 A simple, decentralized package manager for C++, that is similar to npm.
 
@@ -44,6 +44,7 @@ Suffer makes it marginally less painful.
 
 ```bash
 suffer install spdlog
+suffer install fmt
 suffer import spdlog
 ```
 
@@ -91,6 +92,7 @@ Suffer ships with configurations for common libraries:
 - <a href="https://github.com/SRombauts/SQLiteCpp">SQLiteCpp</a> - SRombauts
 - <a href="https://github.com/SOCI/soci">soci</a> - SOCI
 - <a href="https://github.com/jtv/libpqxx">pqxx</a> - jtv
+- <a href="https://github.com/jtv/libpqxx">libsodium</a> - jedisct1
 
 Adding more configurations pre-package install, is just a JSON entry in `~/.suffer/known.json`.
 Post install the configuration file is `~/.suffer/libs/lib/suffer.json`.
@@ -158,7 +160,7 @@ Suffer expects:
 ```
 your-project/
 ├── src/           # Your source files
-├── include/       # Headers (project's)
+├── include/       # Headers (project's, dependencies)
 └── suffer.json    # Dependency configuration
 ```
 

@@ -138,15 +138,15 @@
     "soci": {
         "author": "SOCI",
         "dependencies": {
-            "sqlite3": "sys"
+            "sqlite3": "sys",
+            "pq": "sys"
         },
-        "flags": "-DSOCI_TESTS=OFF -DSOCI_EMPTY=OFF",
+        "flags": "-DSOCI_TESTS=OFF -DSOCI_EMPTY=OFF -DSOCI_POSTGRESQL=ON",
         "headerOnly": false,
         "package": "soci",
         "source": "https://github.com/SOCI/soci",
         "version": "unknown"
-    }
-,
+    },
     "pqxx": {
         "author": "jtv",
         "dependencies": {
@@ -207,6 +207,15 @@
         "headerOnly": true,
         "package": "inja",
         "source": "https://github.com/pantor/inja",
+        "version": "unknown"
+    },
+    "libsodium": {
+        "author": "jedisct1",
+        "dependencies": null,
+        "flags": "",
+        "headerOnly": false,
+        "package": "libsodium",
+        "source": "https://github.com/jedisct1/libsodium",
         "version": "unknown"
     }
 }
