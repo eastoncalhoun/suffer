@@ -92,7 +92,7 @@ Suffer ships with configurations for common libraries:
 - <a href="https://github.com/SRombauts/SQLiteCpp">SQLiteCpp</a> - SRombauts
 - <a href="https://github.com/SOCI/soci">soci</a> - SOCI
 - <a href="https://github.com/jtv/libpqxx">pqxx</a> - jtv
-- <a href="https://github.com/jtv/libpqxx">libsodium</a> - jedisct1
+- <a href="https://github.com/jedisct1/libsodium">libsodium</a> - jedisct1
 
 Adding more configurations pre-package install, is just a JSON entry in `~/.suffer/known.json`.
 Post install the configuration file is `~/.suffer/libs/lib/suffer.json`.
@@ -166,6 +166,12 @@ your-project/
 
 # No more suffering with dependencies!
 Results may vary. Currently, specific version control is unsupported. I plan to work on that in the future at some point. I have also not tested it with boost at all. Plan to get more libraries working with it first.
+
+## Tested Linux Distributions:
+- **Debian 12 x86_64 Headless** - Currently running a production webserver built with suffer
+- **Arch Linux x86_64 KDE** - All listed libraries tested and working
+- **Gentoo Linux x86_64 KDE** - Working (raylib may require additional system configuration)
+- **Other Distros** - System dependency warnings will indicate what to install via your package manager for packages with known configurations
 
 ## License
 
