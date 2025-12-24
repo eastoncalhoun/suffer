@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 
-#include "../utils/io.hpp"
-#include "../core/package.hpp"
-#include "../core/registryHandler.hpp"
+#include <suffer/utils/io.hpp>
+#include <suffer/core/package.hpp>
+#include <suffer/core/registryHandler.hpp>
 
 namespace suffer::commands {
     void install(std::vector<std::string>& args);

@@ -24,5 +24,3 @@ inline std::unordered_map<std::string, int> SWITCHED = {
     {"init", INIT},
     {"regen", REGEN}
 };
-
-//track known flags somehow

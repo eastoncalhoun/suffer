@@ -1,4 +1,4 @@
-#include "./router.hpp"
+#include <suffer/commands/router.hpp>
 
 suffer::commands::Router::Router(int argc, char** argv) {
     this->arguments = std::vector<std::string>();

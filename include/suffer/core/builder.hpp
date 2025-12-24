@@ -6,11 +6,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../../include/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
-#include "./package.hpp"
-#include "./registryHandler.hpp"
-#include "../utils/io.hpp"
+#include <suffer/core/package.hpp>
+#include <suffer/core/registryHandler.hpp>
+#include <suffer/utils/io.hpp>
+#include <suffer/utils/constants.hpp>
+#include <suffer/utils/config.hpp>
 
 namespace suffer::core {
     enum HeaderStyle {

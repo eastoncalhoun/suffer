@@ -1,4 +1,4 @@
-#include "./regen.hpp"
+#include <suffer/commands/regen.hpp>
 
 void suffer::commands::regen() {
     suffer::core::RegistryHandler registry {};

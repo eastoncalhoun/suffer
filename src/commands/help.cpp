@@ -1,4 +1,4 @@
-#include "./help.hpp"
+#include <suffer/commands/help.hpp>
 
 void suffer::commands::help(std::vector<std::string>& arguments) {
     if (arguments.size() < 1) {

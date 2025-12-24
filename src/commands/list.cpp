@@ -1,4 +1,4 @@
-#include "./list.hpp"
+#include <suffer/commands/list.hpp>
 
 void suffer::commands::list(std::vector<std::string>& arguments) {
     suffer::core::RegistryHandler registry = suffer::core::RegistryHandler();

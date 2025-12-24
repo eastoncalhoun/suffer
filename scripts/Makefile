@@ -1,7 +1,12 @@
+# SUFFER GENERATED
+
 CORES := -j$(shell nproc)
-CXX := g++
+CXX := ^c
 IFLAGS := -Iinclude
-CXXFLAGS := $(IFLAGS) -O2
+STD := -std=^s
+CXXFLAGS := $(IFLAGS) $(STD) ^f
+LDFLAGS := -Llib
+LDLIBS := ^l
 SRCcpp := $(shell find src/ -name "*.cpp")
 SRCcc := $(shell find src/ -name "*.cc")
 SRCcxx := $(shell find src/ -name "*.cxx") 
@@ -17,53 +22,63 @@ OBJ := $(OBJcpp) $(OBJcc) $(OBJcxx) $(OBJpp) $(OBJc)
 
 MAKEFLAGS += $(CORES)
 
-build: out/suffer
-	@echo Binary written to out/suffer
+build: out/^n
+	@echo Binary written to out/^n
 
-out/suffer: $(OBJ)
-	@echo Linking $(OBJ)
-
+out/^n: $(OBJ)
 	@mkdir -p out
-	@$(CXX) $(CXXFLAGS) $(OBJ) -o $@
+	@echo Linking $(OBJ)
+	@$(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o $@
 
 build/%.o: src/%.cpp
 	@echo Compiling $<
-
 	@mkdir -p $(dir $@)
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
-
 	@echo Compiled $<
 
-install: out/suffer
-	@if [ $$UID -eq 0 ]; then \
-		echo You must run this install script as a normal user; \
-		exit 1; \
-	fi
+build/%.o: src/%.cc
+	@echo Compiling $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo Compiled $<
 
-	@echo Installing suffer... This will copy ./out/suffer to /usr/bin/suffer. It will use sudo, and immediately destroy sudos cache afterwards
-	
-	sudo cp ./out/suffer /usr/bin
-	sudo -k
-	
-	@mkdir -p $(HOME)/.suffer/cache
-	@mkdir -p $(HOME)/.suffer/libs
-	@mkdir -p $(HOME)/.suffer/scripts
-	@cp ./data/known.json $(HOME)/.suffer/
-	@cp ./data/config.json $(HOME)/.suffer/
-	@cp -R ./scripts/ $(HOME)/.suffer/
+build/%.o: src/%.cxx
+	@echo Compiling $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo Compiled $<
 
-	@echo Suffer has been installed!
+build/%.o: src/%.c++
+	@echo Compiling $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo Compiled $<
+
+build/%.o: src/%.c
+	@echo Compiling $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo Compiled $<
+
+build/%.o: src/%.C
+	@echo Compiling $<
+	@mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo Compiled $<
+
+run: out/^n
+	./out/^n
+	@echo ^n Completed
 
 clean:
 	@rm -rf build/
 	@rm -rf out/
-
 	@echo Build Cleaned
 
 config:
 	@echo Make Configuration
 	@echo
-	@echo Cores: $(shell nproc)
+	@echo Cores: $(CORES)
 	@echo Compiler: $(CXX)
 	@echo Flags: $(CXXFLAGS)
 	@echo Include Flags: $(IFLAGS)
@@ -72,12 +87,15 @@ config:
 	@echo
 	@echo Current Compile Command: $(CXX) $(CXXFLAGS) -c src/foo/bar.cpp -o build/foo/bar.o
 	@echo
-	@echo Current Link Command: $(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o out/suffer
+	@echo Current Link Command: $(CXX) $(CXXFLAGS) $(OBJ) $(LDFLAGS) $(LDLIBS) -o out/^n
 	@echo
 	@echo Found Source: $(SRC)
 	@echo
 	@echo Needed Objects: $(OBJ)
 	@echo
+	@echo Current suffer.project.json
+	@cat ./suffer.project.json
+	@echo
 
 help:
-	@echo Defined Targets: help, build, install, clean, config
+	@echo Defined Targets: help, build, run, clean, config

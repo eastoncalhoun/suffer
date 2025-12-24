@@ -1,4 +1,4 @@
-#include "./install.hpp"
+#include <suffer/commands/install.hpp>
 
 void suffer::commands::install(std::vector<std::string>& args) {
     if (args.size() < 1) {

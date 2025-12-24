@@ -1,4 +1,4 @@
-#include "./init.hpp"
+#include <suffer/commands/init.hpp>
 
 void suffer::commands::init() {
     std::cout << suffer::utils::io::info() << " Creating empty project\n";

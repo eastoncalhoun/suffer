@@ -1,4 +1,4 @@
-#include "./uninstall.hpp"
+#include <suffer/commands/uninstall.hpp>
 
 void suffer::commands::uninstall(std::vector<std::string>& arguments) {
     if (arguments.size() < 1) {

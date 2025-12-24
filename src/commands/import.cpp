@@ -1,4 +1,4 @@
-#include "./import.hpp"
+#include <suffer/commands/import.hpp>
 
 void suffer::commands::import(std::vector<std::string>& args) {
     if (args.size() < 1) {

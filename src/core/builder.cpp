@@ -1,4 +1,4 @@
-#include "./builder.hpp"
+#include <suffer/core/builder.hpp>
 
 void suffer::core::Builder::checkPermissions(const std::filesystem::path& path) {
     const std::filesystem::perms perms = std::filesystem::status(path).permissions();
@@ -566,7 +566,7 @@ std::string suffer::core::Builder::determineProjectGpp(const std::filesystem::pa
     std::string gppCommand;
 
     if (projectPath == pCurr) {
-        //building our own project / makefile g++
+        //building project makefile g++
         gppCommand = "g++ -o ./out/program -I ./include $(shell find ./src -name \"*.cpp\" -o -name \"*.cc\" -o -name \"*.cxx\" -o -name \"*.c++\" -o -name \"*.C\") ";
 
         if (std::filesystem::exists(projectPath / "lib")) {
@@ -574,42 +574,36 @@ std::string suffer::core::Builder::determineProjectGpp(const std::filesystem::pa
         }
     } else {
         //building a dependency
-        gppCommand = "cd " + projectPath.string() + " && ";
-        gppCommand = gppCommand + "g++ -c ";
-
         const int packaging = this->determineHeaderPackaging();
+        gppCommand = "cd " + projectPath.string() + " && g++ -c ";
 
         if (mashing) {
-            std::cout << suffer::utils::io::warning() << " Attempting to include every subdir with headers for compilation\n";
-            
             std::vector<std::filesystem::path> withHeaders {};
-            
+
+            std::cout << suffer::utils::io::warning() << " Attempting to include every subdir with headers for compilation\n";
             this->subdirsWithHeaders(projectPath, withHeaders);
 
             for (const auto& subdir : withHeaders) {
                 gppCommand = gppCommand + "-I " + subdir.string() + " ";
             }
         } else {
-            if (packaging == IH_H_STYLE) {
-                gppCommand = gppCommand + "-I ./include/ ";
-            } else if (packaging == SI_H_STYLE) {
-                gppCommand = gppCommand + "-I ./single_include/ ";
-            } else if (packaging == SN_IH_STYLE) {
-                gppCommand = gppCommand + "-I ./src/ " + this->package.getName() + "/include/";
-            } else if (packaging == SN_IN_STYLE) {
-                gppCommand = gppCommand + "-I ./src/ " + this->package.getName() + "/include/" + this->package.getName();
-            } else {
-                gppCommand = gppCommand + "-I ./ ";
-                
-                std::cout << suffer::utils::io::warning() << " Unhandled header type.. Include path defaulting to ./\n";
+            switch (packaging) {
+                case IH_H_STYLE: gppCommand = gppCommand + "-I ./include/ "; break;
+                case SI_H_STYLE: gppCommand = gppCommand + "-I ./single_include/ "; break;
+                case SN_IH_STYLE: gppCommand = gppCommand + "-I ./src/ " + this->package.getName() + "/include/"; break;
+                case SN_IN_STYLE: gppCommand = gppCommand + "-I ./src/ " + this->package.getName() + "/include/" + this->package.getName(); break;
+                default: 
+                    gppCommand = gppCommand + "-I ./ ";
+                    std::cout << suffer::utils::io::warning() << " Unhandled header type.. Include path defaulting to ./\n";
+                    break;
             }
         }
 
         gppCommand = gppCommand + "$(find ";
 
-        if (std::filesystem::exists(pCurr / "src" / this->package.getName())) {
+        if (std::filesystem::exists(projectPath / "src" / this->package.getName())) {
             gppCommand = gppCommand + "./src/" + this->package.getName();
-        } else if (std::filesystem::exists(pCurr / "src")) {
+        } else if (std::filesystem::exists(projectPath / "src")) {
             gppCommand = gppCommand + "./src/";
         } else {
             std::cout << suffer::utils::io::warning() << " No currently predictable structure found. Attempting brute force compilation\n";
@@ -624,19 +618,70 @@ std::string suffer::core::Builder::determineProjectGpp(const std::filesystem::pa
 
 void suffer::core::Builder::createMakeFile() {
     const std::filesystem::path curr = std::filesystem::current_path();
-    std::string makeFileText = "build:\n";
+    const std::filesystem::path pProjConfig = curr / "suffer.project.json"; 
 
-    makeFileText = makeFileText + "\t" + this->determineProjectGpp(curr);
-    makeFileText = makeFileText + "\nrun:\n";
-    makeFileText = makeFileText + "\t./out/program\n";
+    if (!std::filesystem::exists(pProjConfig)) {
+        std::cerr << suffer::utils::io::error() << " No ./suffer.project.json was found\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::ifstream fProjConfig { pProjConfig };
+    const std::string sProjConfig { std::istreambuf_iterator<char>(fProjConfig), std::istreambuf_iterator<char>() };
+    fProjConfig.close();
+
+    nlohmann::json projConfig;
+
+    try {
+        projConfig = nlohmann::json::parse(sProjConfig);
+    } catch (std::exception& e) {
+        std::cerr << suffer::utils::io::error() << " Invalid json in ./.suffer.project.json\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::string name, compiler, standard, flags;
+    nlohmann::json dependencies;
+
+    try {
+        name = projConfig["projectName"].get<std::string>();
+        compiler = projConfig["compiler"].get<std::string>();
+        standard = projConfig["std"].get<std::string>();
+        flags = projConfig["flags"].get<std::string>();
+        name = projConfig["projectName"].get<std::string>();
+    } catch (std::exception& e) {
+        std::cerr << suffer::utils::io::error() << " Invalid data in ./suffer.project.json\n";
+        exit(EXIT_FAILURE);
+    }
+
+    const std::filesystem::path defMakePath = this->registry.getRegistryPath() / "scripts" / "Makefile";
+    std::ifstream defMake { defMakePath };
+
+    if (!defMake) {
+        std::cerr << suffer::utils::io::error() << " Failed to open " << suffer::utils::io::dataString(defMakePath.string()) << "\n";
+        exit(EXIT_FAILURE);
+    }
+
+    std::string makeText = std::string(std::istreambuf_iterator<char>(defMake), std::istreambuf_iterator<char>());
+    defMake.close();
+
+    makeText.replace(makeText.find("^c"), 2, compiler);
+    makeText.replace(makeText.find("^s"), 2, standard);
+    makeText.replace(makeText.find("^f"), 2, flags);
+    makeText.replace(makeText.find("^l"), 2, this->determineLinkOrder());
+
+    while (makeText.find("^n") != std::string::npos) {
+        makeText.replace(makeText.find("^n"), 2, name);
+    }
 
     std::ofstream makeFile(curr / "Makefile", std::ios::trunc);
 
-    makeFile << makeFileText;
+    if (!makeFile) {
+        std::cerr << suffer::utils::io::error() << " Failed to open the new Makefile\n";
+        exit(EXIT_FAILURE);
+    }
+
+    makeFile << makeText;
     makeFile.close();
 }
-
-
 
 void suffer::core::Builder::import(const int index, const bool root) {
     if (root) {
@@ -660,8 +705,18 @@ void suffer::core::Builder::import(const int index, const bool root) {
     }
 
     const std::unordered_map<std::string, std::string>& dependencies = this->package.getDependencies();
+    const std::filesystem::path buildPath = std::filesystem::current_path() / "lib";
     std::vector<std::string> sysLibs = {};
     std::vector<suffer::core::Package> packages = {};
+    
+    if (!std::filesystem::exists(buildPath)) {
+        if (!std::filesystem::create_directory(buildPath)) {
+            std::cerr << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(buildPath) << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+        std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(buildPath.string()) << "\n";
+    }
     
     for (const auto& keyValue : dependencies) {
         if (keyValue.second != "sys") {
@@ -694,17 +749,7 @@ void suffer::core::Builder::import(const int index, const bool root) {
     }
 
     if (!this->package.isHeaderOnly()) {
-        const std::filesystem::path buildPath = std::filesystem::current_path() / "lib";
         const std::string libName = "lib" + this->package.getName() + ".a";
-
-        if (!std::filesystem::exists(buildPath)) {
-            if (!std::filesystem::create_directory(buildPath)) {
-                std::cerr << suffer::utils::io::error() << " Failed to create " << suffer::utils::io::dataString(buildPath) << "\n";
-                exit(EXIT_FAILURE);
-            }
-
-            std::cout << suffer::utils::io::okay() << " Created " << suffer::utils::io::dataString(buildPath.string()) << "\n";
-        }
 
         if (this->isCached()) {
             std::cout << suffer::utils::io::info() << " Cached version " << suffer::utils::io::dataString(this->package.determineCachePath().string()) << " using...\n"; 
@@ -747,6 +792,7 @@ void suffer::core::Builder::setupProject() {
     const std::filesystem::path include = curr / "include";
     const std::filesystem::path src = curr / "src";
     const std::filesystem::path out = curr / "out";
+    const std::filesystem::path lib = curr / "lib";
 
     if (!std::filesystem::exists(include)) {
         if (std::filesystem::create_directory(include)) {
@@ -772,7 +818,11 @@ void suffer::core::Builder::setupProject() {
     }
 
     if (!std::filesystem::exists(out)) {
-        std::filesystem::create_directories(out);
+        std::filesystem::create_directory(out);
+    }
+
+    if (!std::filesystem::exists(lib)) {
+        std::filesystem::create_directory(lib);
     }
 
     this->createMakeFile();

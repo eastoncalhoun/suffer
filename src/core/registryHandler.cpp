@@ -1,12 +1,4 @@
-#include "./registryHandler.hpp"
-
-const std::filesystem::path suffer::core::RegistryHandler::getLibsPath() {
-    return this->LIBS_PATH;
-}
-
-const std::filesystem::path suffer::core::RegistryHandler::getCachePath() {
-    return this->CACHE_PATH;
-}
+#include <suffer/core/registryHandler.hpp>
 
 void suffer::core::RegistryHandler::checkCreated(const bool CREATED, const std::filesystem::path& PATH) {
     if (!CREATED) {
@@ -36,6 +28,18 @@ const std::filesystem::path suffer::core::RegistryHandler::getRegistryPath() {
     }
 
     return std::filesystem::path(HOME) / ".suffer";
+}
+
+const std::filesystem::path suffer::core::RegistryHandler::getLibsPath() {
+    return suffer::core::RegistryHandler::getRegistryPath() / "libs";
+}
+
+const std::filesystem::path suffer::core::RegistryHandler::getCachePath() {
+    return suffer::core::RegistryHandler::getRegistryPath() / "cache";
+}
+
+const std::filesystem::path suffer::core::RegistryHandler::getScriptsPath() {
+    return suffer::core::RegistryHandler::getRegistryPath() / "scripts";
 }
 
 nlohmann::json suffer::core::RegistryHandler::generateSettings() {
@@ -179,7 +183,7 @@ std::optional<nlohmann::json> suffer::core::RegistryHandler::knownPackage(const 
     return known;
 }
 
-suffer::core::RegistryHandler::RegistryHandler() : REGISTRY_PATH(this->getRegistryPath()), LIBS_PATH(this->getRegistryPath() / "libs"), CACHE_PATH(this->getRegistryPath() / "cache") {
+suffer::core::RegistryHandler::RegistryHandler() : REGISTRY_PATH(this->getRegistryPath()), LIBS_PATH(this->getRegistryPath() / "libs"), CACHE_PATH(this->getRegistryPath() / "cache"), SCRIPTS_PATH(this->getScriptsPath()) {
     if (!std::filesystem::exists(this->REGISTRY_PATH) || !std::filesystem::exists(this->CACHE_PATH) || !std::filesystem::exists(this->LIBS_PATH)) {
         std::string input;
 

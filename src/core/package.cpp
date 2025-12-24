@@ -1,4 +1,4 @@
-#include "./package.hpp"
+#include <suffer/core/package.hpp>
 
 suffer::core::Package::Package(const std::string& name, const std::string& version, const std::string& author, const std::string& source, const bool headerOnly, const std::string& flags, const std::unordered_map<std::string, std::string>& dependencies) {
     this->name = name;

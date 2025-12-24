@@ -115,7 +115,7 @@ Post install the configuration file is `~/.suffer/libs/lib/suffer.json`.
 ## Installation
 
 ### Requirements
-- g++ (C++17)
+- g++ (C++17+)
 - cmake
 - make
 - pkg-config
@@ -164,14 +164,20 @@ your-project/
 └── suffer.json    # Dependency configuration
 ```
 
-# No more suffering with dependencies!
-Results may vary. Currently, specific version control is unsupported. I plan to work on that in the future at some point. I have also not tested it with boost at all. Plan to get more libraries working with it first.
-
 ## Tested Linux Distributions:
 - **Debian 12 x86_64 Headless** - Currently running a production webserver built with suffer
 - **Arch Linux x86_64 KDE** - All listed libraries tested and working
 - **Gentoo Linux x86_64 KDE** - Working (raylib may require additional system configuration)
 - **Other Distros** - System dependency warnings will indicate what to install via your package manager for packages with known configurations
+
+# No more suffering with dependencies!
+Results may vary. Currently, specific version control is unsupported. I plan to work on that in the future at some point. The current roadmap for new features in no particular order is as followed:
+- Better `suffer.project.json` - Right now it does weird stuff if you import the same library more than once. It also should ideally contain much more useful metadata - Soon
+- Custom compile script support per lib's `suffer.json` - When suffer goes to compile a library to static, instead of defaulting to wrapping around cmake or g++, if a lib has a script specified, use it. If you put a shebang at the top of whatever script linked I think any interperated lang could be supported pretty painlessly
+- Actual version control via git chrono - `unknown` is good enough for my uses, but it'd be nice to have specific version flags besides `sys` and `any` - Other features are more important to me right now
+- `suffer clean packagename` - Clean the cache for specific packages - soon cause global only is getting old 
+- `suffer clean --deep` - Clean out all build files from inside the lib dir itself. - May just do a reinstall command, cause it accomplishes the same thing
+- `suffer build cmake` - CMake project config generation (suffer project -> CMake project) - This one is a little trickier, and I'm pretty sure it'll be very difficult. May or may not happen, I'm pretty sure I could auto generate a lot of the CMake but not all of it. And at that point you may as well be using CMake anyways or are already using it.
 
 ## License
 

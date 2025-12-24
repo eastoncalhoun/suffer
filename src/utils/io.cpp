@@ -1,4 +1,4 @@
-#include "./io.hpp"
+#include <suffer/utils/io.hpp>
 
 std::string suffer::utils::io::red(const std::string& string) {
     return "\x1b[31m" + string + "\x1b[0m";

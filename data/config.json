@@ -1,0 +1,8 @@
+{
+    "compilerCpp": "g++",
+    "compilerC": "gcc",
+    "stdCpp": "c++17",
+    "stdC": "c11",
+    "compilerFlags": "-O2",
+    "cmakeFlags": "-j$(nproc)"
+}

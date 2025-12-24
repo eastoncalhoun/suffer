@@ -1,4 +1,4 @@
-#include "./clean.hpp"
+#include <suffer/commands/clean.hpp>
 
 void suffer::commands::clean(std::vector<std::string>& arguments) {
     suffer::core::RegistryHandler registry = suffer::core::RegistryHandler();

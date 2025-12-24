@@ -8,9 +8,9 @@
 
 #include <unistd.h>
 
-#include "../../include/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
-#include "../utils/io.hpp"
+#include <suffer/utils/io.hpp>
 
 namespace suffer::core {
     
