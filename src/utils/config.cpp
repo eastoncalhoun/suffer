@@ -38,7 +38,7 @@ nlohmann::json suffer::utils::Config::rawConfig() {
     nlohmann::json jConfig;
 
     try {
-        jConfig = nlohmann::json::parse(fConfig);
+        jConfig = nlohmann::json::parse(sConfig);
     } catch (std::exception& e) {
         std::cout << suffer::utils::io::error() << " Suffer's configuration file " << suffer::utils::io::dataString(this->configPath) << " contained invalid json\n";
         exit(EXIT_FAILURE);

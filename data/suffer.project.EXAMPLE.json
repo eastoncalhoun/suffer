@@ -3,15 +3,6 @@
     "compiler": "g++",
     "std": "c++20",
     "flags": "-O2",
-    "libraries": [
-        {
-            "name": "spdlog",
-            "version": "any",
-            "dependencies": {
-                "fmt": "any"
-            }
-        }
-    ],
     "link": [
         [
             "-lspdlog",

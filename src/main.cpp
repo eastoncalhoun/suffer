@@ -1,8 +1,8 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "./commands/router.hpp"
-#include "./utils/io.hpp"
+#include <suffer/commands/router.hpp>
+#include <suffer/utils/io.hpp>
 
 int main(int argc, char** argv) {
     if (geteuid() == 0) {

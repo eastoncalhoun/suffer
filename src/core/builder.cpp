@@ -418,19 +418,9 @@ bool suffer::core::Builder::isCached() {
 
 int suffer::core::Builder::determineLinkingIndex() {
     std::filesystem::path filePath = std::filesystem::current_path() / "suffer.project.json";
-    bool newJson = !std::filesystem::exists(filePath);
     
-    if (newJson) {
-        std::ofstream projectFile(filePath);
-
-        if (!projectFile) {
-            std::cerr << suffer::utils::io::error() << " Failed to open " << suffer::utils::io::dataString(filePath.string()) << "\n";
-            exit(EXIT_FAILURE);
-        }
-
-
-        projectFile << "{\"link\" : []} ";
-        projectFile.close();
+    if (!std::filesystem::exists(filePath)) {
+        return 0;
     }
 
     std::ifstream jsonFile { filePath };
@@ -458,13 +448,24 @@ int suffer::core::Builder::determineLinkingIndex() {
 
 void suffer::core::Builder::createProjectJson(const int index, const std::vector<std::string>& sysLibs) {
     const std::filesystem::path jsonPath = std::filesystem::current_path() / "suffer.project.json";
+    suffer::utils::Config config {  };
+    nlohmann::json projectObj;
 
-    //upon running it will already have been proven valid file and json via determineLinkingIndex
-    std::ifstream currProjectFile(jsonPath);
-    std::string jString = std::string(std::istreambuf_iterator<char>(currProjectFile), std::istreambuf_iterator<char>());
-    currProjectFile.close();
+    if (std::filesystem::exists(jsonPath)) {
+        std::ifstream currProjectFile { jsonPath };
+        const std::string jString = std::string(std::istreambuf_iterator<char>(currProjectFile), std::istreambuf_iterator<char>());
 
-    nlohmann::json projectObj = nlohmann::json::parse(jString);
+        currProjectFile.close();
+
+        projectObj = nlohmann::json::parse(jString);
+    } else {
+        projectObj = {  };
+
+        projectObj["projectName"] = "program";
+        projectObj["compiler"] = config.getCompilerCpp();
+        projectObj["std"] = config.getStdCpp();
+        projectObj["flags"] = config.getCompilerFlags();
+    }
 
     if (projectObj["link"].size() <= index) {
         projectObj["link"].push_back(nlohmann::json::array());
@@ -488,7 +489,7 @@ void suffer::core::Builder::createProjectJson(const int index, const std::vector
         return;
     }
 
-    std::ofstream projectFileOut(jsonPath, std::ios::out | std::ios::trunc);
+    std::ofstream projectFileOut { jsonPath };
     
     projectFileOut << projectObj.dump(4);
     projectFileOut <<  "\n";
@@ -634,7 +635,7 @@ void suffer::core::Builder::createMakeFile() {
     try {
         projConfig = nlohmann::json::parse(sProjConfig);
     } catch (std::exception& e) {
-        std::cerr << suffer::utils::io::error() << " Invalid json in ./.suffer.project.json\n";
+        std::cerr << suffer::utils::io::error() << " Invalid json in ./suffer.project.json (Builder::createMakeFile)\n";
         exit(EXIT_FAILURE);
     }
 
@@ -793,6 +794,7 @@ void suffer::core::Builder::setupProject() {
     const std::filesystem::path src = curr / "src";
     const std::filesystem::path out = curr / "out";
     const std::filesystem::path lib = curr / "lib";
+    const std::filesystem::path pConfig = curr / "suffer.project.json";
 
     if (!std::filesystem::exists(include)) {
         if (std::filesystem::create_directory(include)) {
@@ -823,6 +825,10 @@ void suffer::core::Builder::setupProject() {
 
     if (!std::filesystem::exists(lib)) {
         std::filesystem::create_directory(lib);
+    }
+
+    if (!std::filesystem::exists(pConfig)) {
+        this->createProjectJson(0, {});
     }
 
     this->createMakeFile();
