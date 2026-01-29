@@ -42,8 +42,11 @@ install: out/suffer
 
 	@echo Installing suffer... This will copy ./out/suffer to /usr/bin/suffer. It will use sudo, and immediately destroy sudos cache afterwards
 	
-	sudo cp ./out/suffer /usr/bin
-	sudo -k
+	@echo - sudo cp ./out/suffer /usr/bin
+	@sudo cp ./out/suffer /usr/bin
+
+	@echo - sudo -k
+	@sudo -k
 	
 	@mkdir -p $(HOME)/.suffer/cache
 	@mkdir -p $(HOME)/.suffer/libs

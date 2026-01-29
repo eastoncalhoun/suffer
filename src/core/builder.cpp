@@ -485,10 +485,6 @@ void suffer::core::Builder::createProjectJson(const int index, const std::vector
         projectObj["link"][index].push_back("-l" + lib);
     }
 
-    if (projectObj["link"][index].size() == 0) {
-        return;
-    }
-
     std::ofstream projectFileOut { jsonPath };
     
     projectFileOut << projectObj.dump(4);
